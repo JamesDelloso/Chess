@@ -7,180 +7,143 @@ using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using System.Runtime.Serialization;
 
-[Serializable]
 public class Board {
 
-    //private string[] state;
-    //[NonSerialized]
-    //[SerializeField]
     private List<Square> squares;
-    private Piece king;
-    //private List<Piece> pieces;
+    private string fen;
 
     public Board(Board oldBoard)
     {
-        squares = new List<Square>();
-        for(int i=0;i<64;i++)
-        {
-            if(oldBoard.squares[i].isEmpty())
-            {
-                squares.Add(new Square(oldBoard.squares[i].Name(), this));
-            }
-            else
-            {
-                squares.Add(new Square(oldBoard.squares[i].Name(), oldBoard.squares[i].Piece().deepCopy(this), this));
-            }
-        }
-        king = getSquare("E1").Piece();
-        updateBoard();
+
     }
 
-    public Board(Colour pc, Colour cc)
+    public Board(string fen)
     {
-        //Debug.Log(c);
-        //state = new string[] {  "r", "n", "b", "q", "k", "b", "n", "r",
-        //                        "p", "p", "p", "p", "p", "p", "p", "p",
-        //                        " ", " ", " ", " ", " ", " ", " ", " ",
-        //                        " ", " ", " ", " ", " ", " ", " ", " ",
-        //                        " ", " ", " ", " ", " ", " ", " ", " ",
-        //                        " ", " ", " ", " ", " ", " ", " ", " ",
-        //                        "P", "P", "P", "P", "P", "P", "P", "P",
-        //                        "R", "N", "B", "Q", "K", "B", "N", "R"};
         squares = new List<Square>();
-        //Colour pc = Player.getColour();
-        //Colour cc = Computer.getColour();
-        squares.Add(new Square("A1", new Rook(pc, this), this));
-        squares.Add(new Square("B1", new Knight(pc, this), this));
-        squares.Add(new Square("C1", new Bishop(pc, this), this));
-        squares.Add(new Square("D1", new Queen(pc, this), this));
-        squares.Add(new Square("E1", new King(pc, this), this));
-        squares.Add(new Square("F1", new Bishop(pc, this), this));
-        squares.Add(new Square("G1", new Knight(pc, this), this));
-        squares.Add(new Square("H1", new Rook(pc, this), this));
-        squares.Add(new Square("A2", new Pawn(pc, this), this));
-        squares.Add(new Square("B2", new Pawn(pc, this), this));
-        squares.Add(new Square("C2", new Pawn(pc, this), this));
-        squares.Add(new Square("D2", new Pawn(pc, this), this));
-        squares.Add(new Square("E2", new Pawn(pc, this), this));
-        squares.Add(new Square("F2", new Pawn(pc, this), this));
-        squares.Add(new Square("G2", new Pawn(pc, this), this));
-        squares.Add(new Square("H2", new Pawn(pc, this), this));
-        squares.Add(new Square("A3", this));
-        squares.Add(new Square("B3", this));
-        squares.Add(new Square("C3", this));
-        squares.Add(new Square("D3", this));
-        squares.Add(new Square("E3", this));
-        squares.Add(new Square("F3", this));
-        squares.Add(new Square("G3", this));
-        squares.Add(new Square("H3", this));
-        squares.Add(new Square("A4", this));
-        squares.Add(new Square("B4", this));
-        squares.Add(new Square("C4", this));
-        squares.Add(new Square("D4", this));
-        squares.Add(new Square("E4", this));
-        squares.Add(new Square("F4", this));
-        squares.Add(new Square("G4", this));
-        squares.Add(new Square("H4", this));
-        squares.Add(new Square("A5", this));
-        squares.Add(new Square("B5", this));
-        squares.Add(new Square("C5", this));
-        squares.Add(new Square("D5", this));
-        squares.Add(new Square("E5", this));
-        squares.Add(new Square("F5", this));
-        squares.Add(new Square("G5", this));
-        squares.Add(new Square("H5", this));
-        squares.Add(new Square("A6", this));
-        squares.Add(new Square("B6", this));
-        squares.Add(new Square("C6", this));
-        squares.Add(new Square("D6", this));
-        squares.Add(new Square("E6", this));
-        squares.Add(new Square("F6", this));
-        squares.Add(new Square("G6", this));
-        squares.Add(new Square("H6", this));
-        squares.Add(new Square("A7", new Pawn(cc, this), this));
-        squares.Add(new Square("B7", new Pawn(cc, this), this));
-        squares.Add(new Square("C7", new Pawn(cc, this), this));
-        squares.Add(new Square("D7", new Pawn(cc, this), this));
-        squares.Add(new Square("E7", new Pawn(cc, this), this));
-        squares.Add(new Square("F7", new Pawn(cc, this), this));
-        squares.Add(new Square("G7", new Pawn(cc, this), this));
-        squares.Add(new Square("H7", new Pawn(cc, this), this));
-        squares.Add(new Square("A8", new Rook(cc, this), this));
-        squares.Add(new Square("B8", new Knight(cc, this), this));
-        squares.Add(new Square("C8", new Bishop(cc, this), this));
-        squares.Add(new Square("D8", new Queen(cc, this), this));
-        squares.Add(new Square("E8", new King(cc, this), this));
-        squares.Add(new Square("F8", new Bishop(cc, this), this));
-        squares.Add(new Square("G8", new Knight(cc, this), this));
-        squares.Add(new Square("H8", new Rook(cc, this), this));
-        king = getSquare("E1").Piece();
+        //fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        //fen = "8/1k3n2/2BQ4/8/4b3/8/2K3p1/3R4 w - - 0 1";
+        //fen = "8/1k3n2/2B5/8/8/8/2K3p1/3R4 w - - 0 1";
+        string board = fen.Split(' ')[0];
+
+        string alphabet = "ABCDEFGH";
+        int rank = 8;
+        int file = 0;
+        foreach (char c in board)
+        {
+            int number;
+            bool isNumber = int.TryParse(c.ToString(), out number);
+            file++;
+            if (c.Equals('/'))
+            {
+                rank--;
+                file = 0;
+            }
+            else if (c.Equals('r'))
+            {
+                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Rook(Colour.Black)));
+            }
+            else if (c.Equals('n'))
+            {
+                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Knight(Colour.Black)));
+            }
+            else if (c.Equals('b'))
+            {
+                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Bishop(Colour.Black)));
+            }
+            else if (c.Equals('q'))
+            {
+                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Queen(Colour.Black)));
+            }
+            else if (c.Equals('k'))
+            {
+                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new King(Colour.Black)));
+            }
+            else if (c.Equals('p'))
+            {
+                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Pawn(Colour.Black)));
+            }
+            else if (c.Equals('R'))
+            {
+                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Rook(Colour.White)));
+            }
+            else if (c.Equals('N'))
+            {
+                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Knight(Colour.White)));
+            }
+            else if (c.Equals('B'))
+            {
+                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Bishop(Colour.White)));
+            }
+            else if (c.Equals('Q'))
+            {
+                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Queen(Colour.White)));
+            }
+            else if (c.Equals('K'))
+            {
+                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new King(Colour.White)));
+            }
+            else if (c.Equals('P'))
+            {
+                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Pawn(Colour.White)));
+            }
+            else if (isNumber)
+            {
+                for (int i=file;i<file+number;i++)
+                {
+                    squares.Add(new Square(alphabet.Substring(i - 1, 1) + rank, null));
+                }
+                file = file + number - 1;
+            }
+        }
     }
 
-    public void movePiece(Piece piece, Square to)
+    public void setPiece(Piece piece, Square to)
     {
-        //Debug.Log(findSquareWithPiece(piece)+": "+piece);
-        if (piece.GetType().Equals(typeof(King)) && (piece as King).canCastle(to)) //Castling
-        {
-            if (to.Equals(getSquare("C1")))
-            {
-                Debug.Log("Castling Queen Side");
-                getSquare("D1").addPiece(getSquare("A1").Piece());
-                getSquare("A1").removePiece();
-            }
-            else
-            {
-                Debug.Log("Castling King Side");
-                getSquare("F1").addPiece(getSquare("H1").Piece());
-                getSquare("H1").removePiece();
-            }
-        }
-        else if(piece.GetType().Equals(typeof(Rook)))
-        {
-            (piece as Rook).move();
-        }
-        Debug.Log(piece+",,"+findSquareWithPiece(piece));
-        findSquareWithPiece(piece).removePiece();
         to.addPiece(piece);
-        //updateBoard();
+    }
+
+    public void removePiece(Square square)
+    {
+        square.removePiece();
     }
 
     public void updateBoard()
     {
-        Square[] s = squares.ToArray();
-        foreach (Square square in s)
-        {
-            if (square.isEmpty() == false)
-            {
-                square.Piece().updatePossibleMoves();
-            }
-            square.updateAttackingPieces();
-        }
-        foreach (Square square in s)
-        {
-            if (square.isEmpty() == false)
-            {
-                square.Piece().updatePossibleMoves();
-            }
-            square.updateAttackingPieces();
-        }
-    }
-
-    public bool isCheck()
-    {
-        foreach (Piece piece in findSquareWithPiece(king).getAttackingPieces(king.getColour()))
-        {
-            if (piece.getColour() != king.getColour())
-            {
-                Debug.Log("Check");
-                return true;
-            }
-        }
-        return false;
+        //Square[] s = squares.ToArray();
+        //foreach (Square square in s)
+        //{
+        //    if (square.isEmpty() == false)
+        //    {
+        //        square.Piece().updatePossibleMoves();
+        //    }
+        //    square.updateAttackingPieces();
+        //}
+        //foreach (Square square in s)
+        //{
+        //    if (square.isEmpty() == false)
+        //    {
+        //        square.Piece().updatePossibleMoves();
+        //    }
+        //    square.updateAttackingPieces();
+        //}
     }
 
     public List<Square> getSquaresOnBoard()
     {
         return squares;
+    }
+
+    public List<Piece> findSquareWithPiece(string name)
+    {
+        List<Piece> list = new List<Piece>();
+        foreach (Square square in squares)
+        {
+            if(square.isEmpty() == false && square.getPiece().ToString() == name)
+            {
+                list.Add(square.getPiece());
+            }
+        }
+        return list;
     }
 
     public Square findSquareWithPiece(Piece piece)
@@ -190,7 +153,7 @@ public class Board {
         {
             if(square.isEmpty() == false)
             {
-                if (square.Piece().Equals(piece))
+                if (square.getPiece().Equals(piece))
                 {
                     return square;
                 }
@@ -203,7 +166,7 @@ public class Board {
     {
         foreach (Square square in squares)
         {
-            if (square.Name() == name)
+            if (square.ToString() == name)
             {
                 return square;
             }
@@ -211,123 +174,62 @@ public class Board {
         return null;
     }
 
-    public bool isRowBlocked(Square from, Square to)
+    public Square getSquare(int column, int row)
     {
-        int fromColumn = from.Column();
-        int toColumn = to.Column();
-        if (from.Equals(to))
+        foreach (Square square in squares)
         {
-            return true;
-        }
-        foreach (Square sq in squares)
-        {
-            int colNum = sq.Column();
-            if (sq.Row() == from.Row() && (colNum > fromColumn && colNum < toColumn || colNum < fromColumn && colNum > toColumn))
+            if (square.getColumn() == column && square.getRow() == row)
             {
-                if (sq.isEmpty() == false)
-                {
-                    return true;
-                }
+                return square;
             }
         }
-        return false;
-    }
-
-    public bool isColumnBlocked(Square from, Square to)
-    {
-        int fromRow = from.Row();
-        int toRow = to.Row();
-        if(from.Equals(to))
-        {
-            return true;
-        }
-        foreach (Square sq in squares)
-        {
-            int rowNum = sq.Row();
-            if (sq.Column() == from.Column() && (rowNum > fromRow && rowNum < toRow || rowNum < fromRow && rowNum > toRow))
-            {
-                if (sq.isEmpty() == false)
-                {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public bool isDiagonalBlocked(Square from, Square to)
-    {
-        if (from.Equals(to))
-        {
-            return true;
-        }
-        foreach (Square sq in squares)
-        {
-            int colNum = sq.Column();
-            int rowNum = sq.Row();
-
-            int fromColumn = from.Column();
-            int toColumn = to.Column();
-
-            int fromRow = from.Row();
-            int toRow = to.Row();
-
-            int colDiff = colNum - fromColumn;
-            int rowDiff = rowNum - fromRow;
-            if (System.Math.Abs(colDiff) == System.Math.Abs(rowDiff) && (colNum > fromColumn && colNum < toColumn || colNum < fromColumn && colNum > toColumn) && (rowNum > fromRow && rowNum < toRow || rowNum < fromRow && rowNum > toRow))
-            {
-                if (sq.isEmpty() == false)
-                {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return null;
     }
 
     public override string ToString()
     {
+        //  rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -1 2
         string fen = "";
-        int count = 0;
-        foreach(Square sq in squares)
+        int file = 0;
+        int num = 0;
+        squares.Reverse<Square>();
+        for(int i=0;i<squares.Count;i++)
         {
-            if(sq.isEmpty())
+            file++;
+            if(squares[i].isEmpty())
             {
-                count++;
+                num++;
             }
             else
             {
-                if(count != 0)
-                {
-                    fen = fen + count;
-                    count = 0;
-                }
-                string letter = sq.Piece().GetType().ToString().Substring(0, 1);
-                if (sq.Piece().GetType().Equals(typeof(Knight)))
+                string letter = squares[i].getPiece().GetType().ToString().Substring(0, 1);
+                if (squares[i].getPiece().GetType().Equals(typeof(Knight)))
                 {
                     letter = "N";
                 }
-                if(sq.Piece().getColour() == Colour.Black)
+                if (squares[i].getPiece().getColour() == Colour.Black)
                 {
                     letter = letter.ToLower();
                 }
-                fen = fen + letter;
-            }
-            if(sq.Column() == 8)
-            {
-                if (count != 0)
+                if(num > 0)
                 {
-                    fen = fen + count;
+                    fen += num;
                 }
-                fen = fen + "/";
-                count = 0;
+                fen += letter;
+                num = 0;
+            }
+            if(file >= 8)
+            {
+                if(num > 0)
+                {
+                    fen += num;
+                }
+                fen += "/";
+                file = 0;
+                num = 0;
             }
         }
+        fen = fen.Remove(fen.Length - 1);
         return fen;
-    }
-
-    public object Clone()
-    {
-        return new Board(this);
     }
 }

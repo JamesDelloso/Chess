@@ -4,111 +4,58 @@ using UnityEngine;
 
 public class King : Piece {
 
-    private bool hasMoved;
-
-    public King(Colour colour, Board board) : base(colour, board)
+    public King(Colour colour) : base(colour)
     {
         value = 100;
-        hasMoved = false;
     }
-    public override Piece deepCopy(Board b)
-    {
-        return new King(getColour(), b);
-    }
+
     public override void updatePossibleMoves()
     {
         possibleMoves = new List<Square>();
-        protectingSquares = new List<Square>();
-        int column1 = getBoard().findSquareWithPiece(this).Column();
-        int row1 = getBoard().findSquareWithPiece(this).Row();
-        foreach (Square square in getBoard().getSquaresOnBoard())
+        int column = Game.getBoard().findSquareWithPiece(this).getColumn();
+        int row = Game.getBoard().findSquareWithPiece(this).getRow();
+
+        checkSquare(column - 1, row + 1);
+        checkSquare(column, row + 1);
+        checkSquare(column + 1, row + 1);
+        checkSquare(column - 1, row);
+        checkSquare(column, row);
+        checkSquare(column + 1, row);
+        checkSquare(column - 1, row - 1);
+        checkSquare(column, row - 1);
+        checkSquare(column + 1, row - 1);
+
+        if(getColour() == Colour.White && Game.wqCastle == true && Game.getBoard().getSquare("B1").isEmpty() && Game.getBoard().getSquare("C1").isEmpty() && Game.getBoard().getSquare("D1").isEmpty())
         {
-            int column2 = square.Column();
-            int row2 = square.Row();
-            int colDiff = column2 - column1;
-            int rowDiff = row2 - row1;
-            if (colDiff >= -1 && colDiff <= 1 && rowDiff >= -1 && rowDiff <= 1)
-            {
-                if (square.isEmpty() == false)
-                {
-                    if (square.Piece().getColour() != getColour())
-                    {
-                        possibleMoves.Add(square);
-                    }
-                    else
-                    {
-                        protectingSquares.Add(square);
-                    }
-                }
-                else
-                {
-                    possibleMoves.Add(square);
-                }
-                if(isCheck(square))
-                {
-                    possibleMoves.Remove(square);
-                }
-            }
+            possibleMoves.Add(Game.getBoard().getSquare("C1"));
         }
-        if (hasMoved == false && getBoard().getSquare("A1").isEmpty() == false && getBoard().getSquare("B1").isEmpty() && getBoard().getSquare("C1").isEmpty() && getBoard().getSquare("D1").isEmpty())
+        if (getColour() == Colour.White && Game.wkCastle == true && Game.getBoard().getSquare("F1").isEmpty() && Game.getBoard().getSquare("G1").isEmpty())
         {
-            if (getBoard().getSquare("A1").Piece().GetType().Equals(typeof(Rook)))
-            {
-                if ((getBoard().getSquare("A1").Piece() as Rook).HasMoved() == false)
-                {
-                    possibleMoves.Add(getBoard().getSquare("C1"));
-                    if (isCheck(getBoard().getSquare("D1")))
-                    {
-                        possibleMoves.Remove(getBoard().getSquare("D1"));
-                        possibleMoves.Remove(getBoard().getSquare("C1"));
-                    }
-                }
-            }
+            possibleMoves.Add(Game.getBoard().getSquare("G1"));
         }
-        if (hasMoved == false && getBoard().getSquare("H1").isEmpty() == false && getBoard().getSquare("F1").isEmpty() && getBoard().getSquare("G1").isEmpty())
+        else if (getColour() == Colour.Black && Game.bqCastle == true && Game.getBoard().getSquare("B8").isEmpty() && Game.getBoard().getSquare("C8").isEmpty() && Game.getBoard().getSquare("D8").isEmpty())
         {
-            if (getBoard().getSquare("H1").Piece().GetType().Equals(typeof(Rook)))
-            {
-                if ((getBoard().getSquare("H1").Piece() as Rook).HasMoved() == false)
-                {
-                    possibleMoves.Add(getBoard().getSquare("G1"));
-                    if (isCheck(getBoard().getSquare("F1")))
-                    {
-                        possibleMoves.Remove(getBoard().getSquare("F1"));
-                        possibleMoves.Remove(getBoard().getSquare("G1"));
-                    }
-                }
-            }
+            possibleMoves.Add(Game.getBoard().getSquare("C8"));
+        }
+        if (getColour() == Colour.Black && Game.bkCastle == true && Game.getBoard().getSquare("F8").isEmpty() && Game.getBoard().getSquare("G8").isEmpty())
+        {
+            possibleMoves.Add(Game.getBoard().getSquare("G8"));
         }
     }
 
-    public bool canCastle(Square to)
-    {
-        //Board oldBoard = new Board(getBoard());
-        if (hasMoved == false && to.Equals(getBoard().getSquare("C1")) && possibleMoves.Contains(getBoard().getSquare("D1")))
-        {
-            return true;
-        }
-        else if (hasMoved == false && to.Equals(getBoard().getSquare("G1")) && possibleMoves.Contains(getBoard().getSquare("F1")))
-        {
-            return true;
-        }
-        hasMoved = true;
-        return false;
-    }
 
-    public bool isCheck(Square square)
-    {
-        foreach (Piece piece in square.getAttackingPieces(getColour()))
-        {
-            if (piece.getColour() != getColour())
-            {
-                //Debug.Log("Check");
-                //if(square.Name().Equals("D1"))
-                //Debug.Log(square+":" + piece);
-                return true;
-            }
-        }
-        return false;
-    }
+    //public bool isCheck(Square square)
+    //{
+    //    foreach (Piece piece in square.getAttackingPieces(getColour()))
+    //    {
+    //        if (piece.getColour() != getColour())
+    //        {
+    //            //Debug.Log("Check");
+    //            //if(square.Name().Equals("D1"))
+    //            //Debug.Log(square+":" + piece);
+    //            return true;
+    //        }
+    //    }
+    //    return false;
+    //}
 }

@@ -13,9 +13,9 @@ public class Player {
         colour = c;
         foreach (Square square in Game.getBoard().getSquaresOnBoard())
         {
-            if (square.Piece() != null && square.Piece().getColour() == colour)
+            if (square.getPiece() != null && square.getPiece().getColour() == colour)
             {
-                pieces.Add(square.Piece());
+                pieces.Add(square.getPiece());
             }
         }
     }

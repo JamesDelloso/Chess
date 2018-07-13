@@ -5,25 +5,11 @@ using UnityEngine;
 public class Piece {
 
     protected List<Square> possibleMoves;
-    protected List<Square> protectingSquares;
     private Colour colour;
-    protected Board board;
     protected int value; 
 
-    public Piece() { }
-
-	public Piece(Colour colour, Board board) {
+	public Piece(Colour colour) {
         this.colour = colour;
-        possibleMoves = new List<Square>();
-        protectingSquares = new List<Square>();
-        this.board = board;
-        //updatePossibleMoves();
-    }
-
-    public virtual Piece deepCopy(Board b)
-    {
-        Piece other = new Piece(colour, b);
-        return other;
     }
 
     public Colour getColour()
@@ -36,50 +22,32 @@ public class Piece {
         return value;
     }
 
-    public Board getBoard()
-    {
-        return board;
-    }
-
     public virtual void updatePossibleMoves()
     {
 
     }
 
+    protected bool checkSquare(int c, int r)
+    {
+        if (Game.getBoard().getSquare(c, r) == null)
+        {
+            return false;
+        }
+        if (Game.getBoard().getSquare(c, r).isEmpty())
+        {
+            possibleMoves.Add(Game.getBoard().getSquare(c, r));
+            return true;
+        }
+        else if (Game.getBoard().getSquare(c, r).getPiece().getColour() != getColour())
+        {
+            possibleMoves.Add(Game.getBoard().getSquare(c, r));
+        }
+        return false;
+    }
+
     public List<Square> getPossibleMoves()
     {
-        Square[] s = possibleMoves.ToArray();
-        foreach (Square sq in s)
-        {
-            //Square square = getBoard().findSquareWithPiece(this);
-            //getBoard().movePiece(this, sq);
-            //if (getBoard().isCheck())
-            //{
-            //    Debug.Log("Check in Pawn Class");
-            //    //possibleMoves.Remove(sq);
-            //}
-            //getBoard().movePiece(this, square);
-        }
         return possibleMoves;
-    }
-
-    public List<Square> getProtectingSquares()
-    {
-        return protectingSquares;
-    }
-
-    public virtual void move(Square to)
-    {
-        //to.addPiece(this);
-        //foreach (Square square in allPossibleMoves())
-        //{
-        //    if (square.isEmpty() == false)
-        //    {
-        //        square.addAttackingPieces(this);
-        //    }
-        //}
-        //Board b = new Board(Game.getBoard());
-        //b.simulateMove(this, to);
     }
 
     public override string ToString()

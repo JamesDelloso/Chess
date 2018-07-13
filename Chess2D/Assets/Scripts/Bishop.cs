@@ -4,44 +4,47 @@ using UnityEngine;
 
 public class Bishop : Piece {
 
-    public Bishop(Colour colour, Board board) : base(colour, board)
+    public Bishop(Colour colour) : base(colour)
     {
         value = 3;
     }
-    public override Piece deepCopy(Board b)
-    {
-        Piece other = new Bishop(getColour(), b);
-        return new Bishop(getColour(), b);
-    }
+
     public override void updatePossibleMoves()
     {
         possibleMoves = new List<Square>();
-        protectingSquares = new List<Square>();
-        int column1 = getBoard().findSquareWithPiece(this).Column();
-        int row1 = getBoard().findSquareWithPiece(this).Row();
-        foreach (Square square in getBoard().getSquaresOnBoard())
+        int column = Game.getBoard().findSquareWithPiece(this).getColumn();
+        int row = Game.getBoard().findSquareWithPiece(this).getRow();
+
+        int r = row-1;
+        for (int c = column - 1; c > 0 && r > 0; c--, r--)
         {
-            int column2 = square.Column();
-            int row2 = square.Row();
-            int colDiff = column2 - column1;
-            int rowDiff = row2 - row1;
-            if (System.Math.Abs(colDiff) == System.Math.Abs(rowDiff) && getBoard().isDiagonalBlocked(getBoard().findSquareWithPiece(this), square) == false)
+            if (checkSquare(c, r) == false)
             {
-                if (square.isEmpty() == false)
-                {
-                    if (square.Piece().getColour() != getColour())
-                    {
-                        possibleMoves.Add(square);
-                    }
-                    else
-                    {
-                        protectingSquares.Add(square);
-                    }
-                }
-                else
-                {
-                    possibleMoves.Add(square);
-                }
+                break;
+            }
+        }
+        r = row + 1;
+        for (int c = column + 1; c < 9 && r < 9; c++, r++)
+        {
+            if (checkSquare(c, r) == false)
+            {
+                break;
+            }
+        }
+        r = row + 1;
+        for (int c = column - 1; c > 0 && r < 9; c--, r++)
+        {
+            if (checkSquare(c, r) == false)
+            {
+                break;
+            }
+        }
+        r = row - 1;
+        for (int c = column + 1; c < 9 && r > 0; c++, r--)
+        {
+            if (checkSquare(c, r) == false)
+            {
+                break;
             }
         }
     }
