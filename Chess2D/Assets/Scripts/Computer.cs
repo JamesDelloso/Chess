@@ -11,13 +11,13 @@ public class Computer {
     public Computer(Colour c)
     {
         colour = c;
-        foreach (Square square in Game.getBoard().getSquaresOnBoard())
-        {
-            if(square.getPiece() != null && square.getPiece().getColour() == colour)
-            {
-                pieces.Add(square.getPiece());
-            }
-        }
+        //foreach (Square square in Game.getBoard().getSquaresOnBoard())
+        //{
+        //    if(square.getPiece() != null && square.getPiece().getColour() == colour)
+        //    {
+        //        pieces.Add(square.getPiece());
+        //    }
+        //}
     }
 
     public Colour getColour()

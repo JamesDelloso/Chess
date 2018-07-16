@@ -10,14 +10,16 @@ public class Square {
     private Piece piece;
     public bool enPassant = false;
     public Piece enPassantPiece = null;
+    private Board board;
 
-    public Square(string position, Piece piece)
+    public Square(int column, int row, Piece piece, Board board)
     {
         this.piece = piece;
         string letters = "ABCDEFGH";
-        column = letters.IndexOf(position.Substring(0, 1)) + 1;
-        row = int.Parse(position.Substring(1, 1));
-        name = position;
+        name = letters[column-1]+row.ToString();
+        this.column = column;
+        this.row = row;
+        this.board = board;
     }
 
     public void addPiece(Piece piece)
@@ -32,7 +34,7 @@ public class Square {
 
     public void promotePawn(Piece piece, Piece promotedPiece)
     {
-        Square from = Game.getBoard().findSquareWithPiece(piece);
+        Square from = board.getSquare(piece);
         from.piece = null;
         this.piece = promotedPiece;
     }

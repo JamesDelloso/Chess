@@ -4,16 +4,16 @@ using UnityEngine;
 
 public class Queen : Piece {
 
-     public Queen(Colour colour) : base(colour)
+    public Queen(Colour colour, Board board, int c, int r) : base(colour, board, c, r)
     {
         value = 9;
     }
 
-    public override void updatePossibleMoves()
+    public override List<Square> getPossibleMoves()
     {
         possibleMoves = new List<Square>();
-        int column = Game.getBoard().findSquareWithPiece(this).getColumn();
-        int row = Game.getBoard().findSquareWithPiece(this).getRow();
+        int column = board.getSquare(this).getColumn();
+        int row = board.getSquare(this).getRow();
 
         for (int i = column - 1; i > 0; i--)
         {
@@ -76,5 +76,7 @@ public class Queen : Piece {
                 break;
             }
         }
+
+        return possibleMoves;
     }
 }

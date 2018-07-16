@@ -12,10 +12,19 @@ public class Board {
     private List<Square> squares;
     private string fen;
 
-    public Board(Board oldBoard)
-    {
+    public King wKing;
+    public King bKing;
 
-    }
+    private bool whitesTurn = true;
+    public bool wkCastle = true;
+    public bool wqCastle = true;
+    public bool bkCastle = true;
+    public bool bqCastle = true;
+    private Square enPassant = null;
+    private Piece enPassantPiece = null;
+    private int halfMove = 0;
+    private float fullMove = 1;
+    private string pgn = "";
 
     public Board(string fen)
     {
@@ -25,7 +34,6 @@ public class Board {
         //fen = "8/1k3n2/2B5/8/8/8/2K3p1/3R4 w - - 0 1";
         string board = fen.Split(' ')[0];
 
-        string alphabet = "ABCDEFGH";
         int rank = 8;
         int file = 0;
         foreach (char c in board)
@@ -40,61 +48,163 @@ public class Board {
             }
             else if (c.Equals('r'))
             {
-                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Rook(Colour.Black)));
+                squares.Add(new Square(file, rank, new Rook(Colour.Black, this, file, rank), this));
+                //Debug.Log(file + "," + rank);
             }
             else if (c.Equals('n'))
             {
-                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Knight(Colour.Black)));
+                squares.Add(new Square(file, rank, new Knight(Colour.Black, this, file, rank), this));
             }
             else if (c.Equals('b'))
             {
-                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Bishop(Colour.Black)));
+                squares.Add(new Square(file, rank, new Bishop(Colour.Black, this, file, rank), this));
             }
             else if (c.Equals('q'))
             {
-                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Queen(Colour.Black)));
+                squares.Add(new Square(file, rank, new Queen(Colour.Black, this, file, rank), this));
             }
             else if (c.Equals('k'))
             {
-                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new King(Colour.Black)));
+                bKing = new King(Colour.Black, this, file, rank);
+                squares.Add(new Square(file, rank, bKing, this));
             }
             else if (c.Equals('p'))
             {
-                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Pawn(Colour.Black)));
+                squares.Add(new Square(file, rank, new Pawn(Colour.Black, this, file, rank), this));
             }
             else if (c.Equals('R'))
             {
-                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Rook(Colour.White)));
+                squares.Add(new Square(file, rank, new Rook(Colour.White, this, file, rank), this));
             }
             else if (c.Equals('N'))
             {
-                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Knight(Colour.White)));
+                squares.Add(new Square(file, rank, new Knight(Colour.White, this, file, rank), this));
             }
             else if (c.Equals('B'))
             {
-                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Bishop(Colour.White)));
+                squares.Add(new Square(file, rank, new Bishop(Colour.White, this, file, rank), this));
             }
             else if (c.Equals('Q'))
             {
-                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Queen(Colour.White)));
+                squares.Add(new Square(file, rank, new Queen(Colour.White, this, file, rank), this));
             }
             else if (c.Equals('K'))
             {
-                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new King(Colour.White)));
+                wKing = new King(Colour.White, this, file, rank);
+                squares.Add(new Square(file, rank, wKing, this));
             }
             else if (c.Equals('P'))
             {
-                squares.Add(new Square(alphabet.Substring(file - 1, 1) + rank, new Pawn(Colour.White)));
+                squares.Add(new Square(file, rank, new Pawn(Colour.White, this, file, rank), this));
             }
             else if (isNumber)
             {
                 for (int i=file;i<file+number;i++)
                 {
-                    squares.Add(new Square(alphabet.Substring(i - 1, 1) + rank, null));
+                    squares.Add(new Square(i, rank, null, this));
                 }
                 file = file + number - 1;
             }
         }
+    }
+
+    public void movePiece(Piece piece, Square from, Square to, bool simulatedMove)
+    {
+        //Board temp = new Board(getFen());
+        //temp.getSquare(from.ToString()).removePiece();
+        //temp.getSquare(to.ToString()).addPiece(temp.getSquare(piece.getPosition().x, piece.getPosition().y).getPiece());
+        //Debug.Log(temp.getFen());
+        whitesTurn = !whitesTurn;
+        if (enPassant != null)
+        {
+            if (piece.GetType().Equals((typeof(Pawn))) && to.ToString().Equals(enPassant.ToString()))
+            {
+                getSquare(enPassantPiece).removePiece();
+            }
+            enPassant.enPassant = false;
+            enPassant.enPassantPiece = null;
+            enPassant = null;
+            enPassantPiece = null;
+        }
+        fullMove += 0.5f;
+
+        if (piece.GetType().Equals(typeof(Pawn)))
+        {
+            (piece as Pawn).startingPos = false;
+        }
+
+        if (piece.GetType().Equals((typeof(Pawn))) && Mathf.Abs(from.getRow() - to.getRow()) == 2)
+        {
+            enPassant = getSquare(from.getColumn(), (from.getRow() + to.getRow()) / 2);
+            enPassantPiece = piece;
+            getSquare(from.getColumn(), (from.getRow() + to.getRow()) / 2).enPassant = true;
+            getSquare(from.getColumn(), (from.getRow() + to.getRow()) / 2).enPassantPiece = piece;
+        }
+        else if (piece.GetType().Equals((typeof(King))) && piece.getColour() == Colour.White)
+        {
+            if (from.ToString().Equals("E1") && to.ToString().Equals("G1"))
+            {
+                getSquare("F1").addPiece(getSquare("H1").getPiece());
+                getSquare("H1").removePiece();
+            }
+            else if (from.ToString().Equals("E1") && to.ToString().Equals("C1"))
+            {
+                getSquare("D1").addPiece(getSquare("A1").getPiece());
+                getSquare("A1").removePiece();
+            }
+            wkCastle = false;
+            wqCastle = false;
+        }
+        else if (piece.GetType().Equals((typeof(King))) && piece.getColour() == Colour.Black)
+        {
+            if (from.ToString().Equals("E8") && to.ToString().Equals("G8"))
+            {
+                getSquare("F8").addPiece(getSquare("H8").getPiece());
+                getSquare("H8").removePiece();
+            }
+            else if (from.ToString().Equals("E8") && to.ToString().Equals("C8"))
+            {
+                getSquare("D8").addPiece(getSquare("A8").getPiece());
+                getSquare("A8").removePiece();
+            }
+            bkCastle = false;
+            bqCastle = false;
+        }
+        else if (piece.GetType().Equals((typeof(Rook))) && piece.getColour() == Colour.White && from.ToString().Equals("A1"))
+        {
+            wqCastle = false;
+        }
+        else if (piece.GetType().Equals((typeof(Rook))) && piece.getColour() == Colour.White && from.ToString().Equals("H1"))
+        {
+            wkCastle = false;
+        }
+        else if (piece.GetType().Equals((typeof(Rook))) && piece.getColour() == Colour.Black && from.ToString().Equals("A8"))
+        {
+            bqCastle = false;
+        }
+        else if (piece.GetType().Equals((typeof(Rook))) && piece.getColour() == Colour.Black && from.ToString().Equals("H8"))
+        {
+            bkCastle = false;
+        }
+        addToPGN(piece, to);
+        from.removePiece();
+        to.addPiece(piece);
+    }
+
+    public bool isCheck()
+    {
+        if(wKing.getAttackingSquares().Count > 0)
+        {
+            Debug.Log("Check on White");
+            //wKing.getCheckPath();
+            return true;
+        }
+        if(bKing.getAttackingSquares().Count > 0)
+        {
+            Debug.Log("Check on Black");
+            return true;
+        }
+        return false;
     }
 
     public void setPiece(Piece piece, Square to)
@@ -107,49 +217,14 @@ public class Board {
         square.removePiece();
     }
 
-    public void updateBoard()
-    {
-        //Square[] s = squares.ToArray();
-        //foreach (Square square in s)
-        //{
-        //    if (square.isEmpty() == false)
-        //    {
-        //        square.Piece().updatePossibleMoves();
-        //    }
-        //    square.updateAttackingPieces();
-        //}
-        //foreach (Square square in s)
-        //{
-        //    if (square.isEmpty() == false)
-        //    {
-        //        square.Piece().updatePossibleMoves();
-        //    }
-        //    square.updateAttackingPieces();
-        //}
-    }
-
     public List<Square> getSquaresOnBoard()
     {
         return squares;
     }
 
-    public List<Piece> findSquareWithPiece(string name)
+    public Square getSquare(Piece piece)
     {
-        List<Piece> list = new List<Piece>();
         foreach (Square square in squares)
-        {
-            if(square.isEmpty() == false && square.getPiece().ToString() == name)
-            {
-                list.Add(square.getPiece());
-            }
-        }
-        return list;
-    }
-
-    public Square findSquareWithPiece(Piece piece)
-    {
-        Square[] s = squares.ToArray();
-        foreach (Square square in s)
         {
             if(square.isEmpty() == false)
             {
@@ -184,6 +259,78 @@ public class Board {
             }
         }
         return null;
+    }
+
+    public string getFen()
+    {
+        string fen = ToString();
+        if (whitesTurn) fen += " w ";
+        else fen += " b ";
+        if (wkCastle) fen += "K";
+        if (wqCastle) fen += "Q";
+        if (bkCastle) fen += "k";
+        if (bqCastle) fen += "q";
+        if (enPassant == null) fen += " - ";
+        else fen += " " + enPassant.ToString().ToLower() + " ";
+        fen += halfMove + " " + (int)fullMove;
+        return fen;
+    }
+
+    public string addToPGN(Piece piece, Square to)
+    {
+        bool castled = false;
+        if (piece.getColour() == Colour.White)
+        {
+            pgn += (int)fullMove + ".  ";
+        }
+        if (piece.GetType().Equals(typeof(Rook)))
+        {
+            pgn += "R";
+        }
+        else if (piece.GetType().Equals(typeof(Bishop)))
+        {
+            pgn += "B";
+        }
+        else if (piece.GetType().Equals(typeof(Knight)))
+        {
+            pgn += "N";
+        }
+        else if (piece.GetType().Equals(typeof(Queen)))
+        {
+            pgn += "Q";
+        }
+        else if (piece.GetType().Equals(typeof(King)))
+        {
+            Square from = getSquare(piece);
+            if (from.getColumn() == 5 && to.getColumn() == 3)
+            {
+                pgn += "O-O-O ";
+                castled = true;
+            }
+            else if (from.getColumn() == 5 && to.getColumn() == 7)
+            {
+                pgn += "O-O ";
+                castled = true;
+            }
+            else
+            {
+                pgn += "K";
+            }
+        }
+        if (to.isEmpty() == false)
+        {
+            pgn += "x";
+        }
+        if (castled == false)
+        {
+            pgn += to.ToString().ToLower() + " ";
+        }
+        return pgn;
+    }
+
+    public string getPGN()
+    {
+        return pgn;
     }
 
     public override string ToString()

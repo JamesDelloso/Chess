@@ -4,16 +4,18 @@ using UnityEngine;
 
 public class King : Piece {
 
-    public King(Colour colour) : base(colour)
+    private List<Square> checkPath;
+
+    public King(Colour colour, Board board, int c, int r) : base(colour, board, c, r)
     {
         value = 100;
     }
 
-    public override void updatePossibleMoves()
+    public override List<Square> getPossibleMoves()
     {
         possibleMoves = new List<Square>();
-        int column = Game.getBoard().findSquareWithPiece(this).getColumn();
-        int row = Game.getBoard().findSquareWithPiece(this).getRow();
+        int column = board.getSquare(this).getColumn();
+        int row = board.getSquare(this).getRow();
 
         checkSquare(column - 1, row + 1);
         checkSquare(column, row + 1);
@@ -25,37 +27,23 @@ public class King : Piece {
         checkSquare(column, row - 1);
         checkSquare(column + 1, row - 1);
 
-        if(getColour() == Colour.White && Game.wqCastle == true && Game.getBoard().getSquare("B1").isEmpty() && Game.getBoard().getSquare("C1").isEmpty() && Game.getBoard().getSquare("D1").isEmpty())
+        if(getColour() == Colour.White && board.wqCastle == true && board.getSquare("B1").isEmpty() && board.getSquare("C1").isEmpty() && board.getSquare("D1").isEmpty())
         {
-            possibleMoves.Add(Game.getBoard().getSquare("C1"));
+            possibleMoves.Add(board.getSquare("C1"));
         }
-        if (getColour() == Colour.White && Game.wkCastle == true && Game.getBoard().getSquare("F1").isEmpty() && Game.getBoard().getSquare("G1").isEmpty())
+        if (getColour() == Colour.White && board.wkCastle == true && board.getSquare("F1").isEmpty() && board.getSquare("G1").isEmpty())
         {
-            possibleMoves.Add(Game.getBoard().getSquare("G1"));
+            possibleMoves.Add(board.getSquare("G1"));
         }
-        else if (getColour() == Colour.Black && Game.bqCastle == true && Game.getBoard().getSquare("B8").isEmpty() && Game.getBoard().getSquare("C8").isEmpty() && Game.getBoard().getSquare("D8").isEmpty())
+        else if (getColour() == Colour.Black && board.bqCastle == true && board.getSquare("B8").isEmpty() && board.getSquare("C8").isEmpty() && board.getSquare("D8").isEmpty())
         {
-            possibleMoves.Add(Game.getBoard().getSquare("C8"));
+            possibleMoves.Add(board.getSquare("C8"));
         }
-        if (getColour() == Colour.Black && Game.bkCastle == true && Game.getBoard().getSquare("F8").isEmpty() && Game.getBoard().getSquare("G8").isEmpty())
+        if (getColour() == Colour.Black && board.bkCastle == true && board.getSquare("F8").isEmpty() && board.getSquare("G8").isEmpty())
         {
-            possibleMoves.Add(Game.getBoard().getSquare("G8"));
+            possibleMoves.Add(board.getSquare("G8"));
         }
+
+        return possibleMoves;
     }
-
-
-    //public bool isCheck(Square square)
-    //{
-    //    foreach (Piece piece in square.getAttackingPieces(getColour()))
-    //    {
-    //        if (piece.getColour() != getColour())
-    //        {
-    //            //Debug.Log("Check");
-    //            //if(square.Name().Equals("D1"))
-    //            //Debug.Log(square+":" + piece);
-    //            return true;
-    //        }
-    //    }
-    //    return false;
-    //}
 }

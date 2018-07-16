@@ -5,17 +5,17 @@ using UnityEngine.Profiling;
 
 public class Rook : Piece {
 
-    public Rook(Colour colour) : base(colour)
+    public Rook(Colour colour, Board board, int c, int r) : base(colour, board, c, r)
     {
         value = 5;
     }
 
-    public override void updatePossibleMoves()
+    public override List<Square> getPossibleMoves()
     {
         Profiler.BeginSample("Rook Possible Moves");
         possibleMoves = new List<Square>();
-        int column = Game.getBoard().findSquareWithPiece(this).getColumn();
-        int row = Game.getBoard().findSquareWithPiece(this).getRow();
+        int column = board.getSquare(this).getColumn();
+        int row = board.getSquare(this).getRow();
 
         for (int i = column - 1; i > 0; i--)
         {
@@ -46,5 +46,6 @@ public class Rook : Piece {
             }
         }
         Profiler.EndSample();
+        return possibleMoves;
     }
 }

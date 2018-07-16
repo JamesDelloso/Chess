@@ -4,16 +4,16 @@ using UnityEngine;
 
 public class Bishop : Piece {
 
-    public Bishop(Colour colour) : base(colour)
+    public Bishop(Colour colour, Board board, int c, int r) : base(colour, board, c, r)
     {
         value = 3;
     }
 
-    public override void updatePossibleMoves()
+    public override List<Square> getPossibleMoves()
     {
         possibleMoves = new List<Square>();
-        int column = Game.getBoard().findSquareWithPiece(this).getColumn();
-        int row = Game.getBoard().findSquareWithPiece(this).getRow();
+        int column = board.getSquare(this).getColumn();
+        int row = board.getSquare(this).getRow();
 
         int r = row-1;
         for (int c = column - 1; c > 0 && r > 0; c--, r--)
@@ -47,5 +47,6 @@ public class Bishop : Piece {
                 break;
             }
         }
+        return possibleMoves;
     }
 }

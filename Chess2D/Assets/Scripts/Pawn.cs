@@ -4,12 +4,10 @@ using UnityEngine;
 
 public class Pawn : Piece {
 
-    private Square left;
-    private Square right;
     private int column;
     public bool startingPos;
 
-    public Pawn(Colour colour) : base(colour)
+    public Pawn(Colour colour, Board board, int c, int r) : base(colour, board, c, r)
     {
         startingPos = true;
         value = 1;
@@ -20,25 +18,15 @@ public class Pawn : Piece {
         to.addPiece(piece);
     }
 
-    public Square getLeftSquare()
-    {
-        return left;
-    }
-
-    public Square getRightSquare()
-    {
-        return right;
-    }
-
     public void move()
     {
         startingPos = false;
     }
-    public override void updatePossibleMoves()
+    public override List<Square> getPossibleMoves()
     {
         possibleMoves = new List<Square>();
-        column = Game.getBoard().findSquareWithPiece(this).getColumn();
-        int row = Game.getBoard().findSquareWithPiece(this).getRow();
+        column = board.getSquare(this).getColumn();
+        int row = board.getSquare(this).getRow();
 
         int dir = 1;
         if(getColour() == Colour.Black)
@@ -54,22 +42,24 @@ public class Pawn : Piece {
         {
             checkPawnSquare(column, row + dir + dir);
         }
+
+        return possibleMoves;
     }
 
     private bool checkPawnSquare(int c, int r)
     {
-        if (Game.getBoard().getSquare(c, r) == null)
+        if (board.getSquare(c, r) == null)
         {
             return false;
         }
-        if (Game.getBoard().getSquare(c, r).isEmpty() && c == column)
+        if (board.getSquare(c, r).isEmpty() && c == column)
         {
-            possibleMoves.Add(Game.getBoard().getSquare(c, r));
+            possibleMoves.Add(board.getSquare(c, r));
             return true;
         }
-        if(c != column && Game.getBoard().getSquare(c, r).isEmpty() == false && Game.getBoard().getSquare(c, r).getPiece().getColour() != getColour() || (Game.getBoard().getSquare(c, r).enPassant == true && Game.getBoard().getSquare(c, r).enPassantPiece.getColour() != getColour()))
+        if(c != column && board.getSquare(c, r).isEmpty() == false && board.getSquare(c, r).getPiece().getColour() != getColour() || (board.getSquare(c, r).enPassant == true && board.getSquare(c, r).enPassantPiece.getColour() != getColour()))
         {
-            possibleMoves.Add(Game.getBoard().getSquare(c, r));
+            possibleMoves.Add(board.getSquare(c, r));
         }
         return false;
     }
