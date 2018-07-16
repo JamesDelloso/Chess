@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Bishop : Piece {
 
-    public Bishop(Colour colour, Board board, int c, int r) : base(colour, board, c, r)
+    public Bishop(Player player, Board board, int c, int r) : base(player, board, c, r)
     {
         value = 3;
     }

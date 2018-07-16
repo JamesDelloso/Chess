@@ -7,7 +7,7 @@ public class Pawn : Piece {
     private int column;
     public bool startingPos;
 
-    public Pawn(Colour colour, Board board, int c, int r) : base(colour, board, c, r)
+    public Pawn(Player player, Board board, int c, int r) : base(player, board, c, r)
     {
         startingPos = true;
         value = 1;
@@ -29,7 +29,7 @@ public class Pawn : Piece {
         int row = board.getSquare(this).getRow();
 
         int dir = 1;
-        if(getColour() == Colour.Black)
+        if(getPlayer() == board.player2)
         {
             dir = -1;
         }
@@ -57,7 +57,7 @@ public class Pawn : Piece {
             possibleMoves.Add(board.getSquare(c, r));
             return true;
         }
-        if(c != column && board.getSquare(c, r).isEmpty() == false && board.getSquare(c, r).getPiece().getColour() != getColour() || (board.getSquare(c, r).enPassant == true && board.getSquare(c, r).enPassantPiece.getColour() != getColour()))
+        if(c != column && board.getSquare(c, r).isEmpty() == false && board.getSquare(c, r).getPiece().getPlayer() != getPlayer() || (board.getSquare(c, r).enPassant == true && board.getSquare(c, r).enPassantPiece.getPlayer() != getPlayer()))
         {
             possibleMoves.Add(board.getSquare(c, r));
         }

@@ -12,6 +12,9 @@ public class Board {
     private List<Square> squares;
     private string fen;
 
+    public Player player1;
+    public Player player2;
+
     public King wKing;
     public King bKing;
 
@@ -28,6 +31,8 @@ public class Board {
 
     public Board(string fen)
     {
+        player1 = new Player();
+        player2 = new Player();
         squares = new List<Square>();
         //fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         //fen = "8/1k3n2/2BQ4/8/4b3/8/2K3p1/3R4 w - - 0 1";
@@ -48,54 +53,54 @@ public class Board {
             }
             else if (c.Equals('r'))
             {
-                squares.Add(new Square(file, rank, new Rook(Colour.Black, this, file, rank), this));
+                squares.Add(new Square(file, rank, new Rook(player2, this, file, rank), this));
                 //Debug.Log(file + "," + rank);
             }
             else if (c.Equals('n'))
             {
-                squares.Add(new Square(file, rank, new Knight(Colour.Black, this, file, rank), this));
+                squares.Add(new Square(file, rank, new Knight(player2, this, file, rank), this));
             }
             else if (c.Equals('b'))
             {
-                squares.Add(new Square(file, rank, new Bishop(Colour.Black, this, file, rank), this));
+                squares.Add(new Square(file, rank, new Bishop(player2, this, file, rank), this));
             }
             else if (c.Equals('q'))
             {
-                squares.Add(new Square(file, rank, new Queen(Colour.Black, this, file, rank), this));
+                squares.Add(new Square(file, rank, new Queen(player2, this, file, rank), this));
             }
             else if (c.Equals('k'))
             {
-                bKing = new King(Colour.Black, this, file, rank);
+                bKing = new King(player2, this, file, rank);
                 squares.Add(new Square(file, rank, bKing, this));
             }
             else if (c.Equals('p'))
             {
-                squares.Add(new Square(file, rank, new Pawn(Colour.Black, this, file, rank), this));
+                squares.Add(new Square(file, rank, new Pawn(player2, this, file, rank), this));
             }
             else if (c.Equals('R'))
             {
-                squares.Add(new Square(file, rank, new Rook(Colour.White, this, file, rank), this));
+                squares.Add(new Square(file, rank, new Rook(player1, this, file, rank), this));
             }
             else if (c.Equals('N'))
             {
-                squares.Add(new Square(file, rank, new Knight(Colour.White, this, file, rank), this));
+                squares.Add(new Square(file, rank, new Knight(player1, this, file, rank), this));
             }
             else if (c.Equals('B'))
             {
-                squares.Add(new Square(file, rank, new Bishop(Colour.White, this, file, rank), this));
+                squares.Add(new Square(file, rank, new Bishop(player1, this, file, rank), this));
             }
             else if (c.Equals('Q'))
             {
-                squares.Add(new Square(file, rank, new Queen(Colour.White, this, file, rank), this));
+                squares.Add(new Square(file, rank, new Queen(player1, this, file, rank), this));
             }
             else if (c.Equals('K'))
             {
-                wKing = new King(Colour.White, this, file, rank);
+                wKing = new King(player1, this, file, rank);
                 squares.Add(new Square(file, rank, wKing, this));
             }
             else if (c.Equals('P'))
             {
-                squares.Add(new Square(file, rank, new Pawn(Colour.White, this, file, rank), this));
+                squares.Add(new Square(file, rank, new Pawn(player1, this, file, rank), this));
             }
             else if (isNumber)
             {
@@ -140,7 +145,7 @@ public class Board {
             getSquare(from.getColumn(), (from.getRow() + to.getRow()) / 2).enPassant = true;
             getSquare(from.getColumn(), (from.getRow() + to.getRow()) / 2).enPassantPiece = piece;
         }
-        else if (piece.GetType().Equals((typeof(King))) && piece.getColour() == Colour.White)
+        else if (piece.GetType().Equals((typeof(King))) && piece.getPlayer() == player1)
         {
             if (from.ToString().Equals("E1") && to.ToString().Equals("G1"))
             {
@@ -155,7 +160,7 @@ public class Board {
             wkCastle = false;
             wqCastle = false;
         }
-        else if (piece.GetType().Equals((typeof(King))) && piece.getColour() == Colour.Black)
+        else if (piece.GetType().Equals((typeof(King))) && piece.getPlayer() == player2)
         {
             if (from.ToString().Equals("E8") && to.ToString().Equals("G8"))
             {
@@ -170,19 +175,19 @@ public class Board {
             bkCastle = false;
             bqCastle = false;
         }
-        else if (piece.GetType().Equals((typeof(Rook))) && piece.getColour() == Colour.White && from.ToString().Equals("A1"))
+        else if (piece.GetType().Equals((typeof(Rook))) && piece.getPlayer() == player1 && from.ToString().Equals("A1"))
         {
             wqCastle = false;
         }
-        else if (piece.GetType().Equals((typeof(Rook))) && piece.getColour() == Colour.White && from.ToString().Equals("H1"))
+        else if (piece.GetType().Equals((typeof(Rook))) && piece.getPlayer() == player1 && from.ToString().Equals("H1"))
         {
             wkCastle = false;
         }
-        else if (piece.GetType().Equals((typeof(Rook))) && piece.getColour() == Colour.Black && from.ToString().Equals("A8"))
+        else if (piece.GetType().Equals((typeof(Rook))) && piece.getPlayer() == player2 && from.ToString().Equals("A8"))
         {
             bqCastle = false;
         }
-        else if (piece.GetType().Equals((typeof(Rook))) && piece.getColour() == Colour.Black && from.ToString().Equals("H8"))
+        else if (piece.GetType().Equals((typeof(Rook))) && piece.getPlayer() == player2 && from.ToString().Equals("H8"))
         {
             bkCastle = false;
         }
@@ -279,7 +284,7 @@ public class Board {
     public string addToPGN(Piece piece, Square to)
     {
         bool castled = false;
-        if (piece.getColour() == Colour.White)
+        if (piece.getPlayer() == player1)
         {
             pgn += (int)fullMove + ".  ";
         }
@@ -354,7 +359,7 @@ public class Board {
                 {
                     letter = "N";
                 }
-                if (squares[i].getPiece().getColour() == Colour.Black)
+                if (squares[i].getPiece().getPlayer() == player2)
                 {
                     letter = letter.ToLower();
                 }

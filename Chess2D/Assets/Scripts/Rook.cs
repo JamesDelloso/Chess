@@ -5,7 +5,7 @@ using UnityEngine.Profiling;
 
 public class Rook : Piece {
 
-    public Rook(Colour colour, Board board, int c, int r) : base(colour, board, c, r)
+    public Rook(Player player, Board board, int c, int r) : base(player, board, c, r)
     {
         value = 5;
     }

@@ -6,20 +6,21 @@ public class Piece {
 
     protected List<Square> possibleMoves;
     private List<Square> attackingSquares;
-    private Colour colour;
+    private Player player;
     protected int value;
     protected Board board;
     protected Vector2Int position = new Vector2Int();
 
-    public Piece(Colour colour, Board board, Vector2Int position)
+    public Piece(Player player, Board board, Vector2Int position)
     {
+        this.player = player;
         this.board = board;
         this.position = position;
         attackingSquares = new List<Square>();
     }
 
-    public Piece(Colour colour, Board board, int c, int r) {
-        this.colour = colour;
+    public Piece(Player player, Board board, int c, int r) {
+        this.player = player;
         this.board = board;
         //position.x = c;
         //position.y = r;
@@ -27,9 +28,9 @@ public class Piece {
         attackingSquares = new List<Square>();
     }
 
-    public Colour getColour()
+    public Player getPlayer()
     {
-        return colour;
+        return player;
     }
 
     public int getValue()
@@ -49,7 +50,7 @@ public class Piece {
             possibleMoves.Add(board.getSquare(c, r));
             return true;
         }
-        else if (board.getSquare(c, r).getPiece().getColour() != getColour())
+        else if (board.getSquare(c, r).getPiece().getPlayer() != getPlayer())
         {
             possibleMoves.Add(board.getSquare(c, r));
         }
@@ -82,6 +83,6 @@ public class Piece {
 
     public override string ToString()
     {
-        return getColour() + " " + GetType();
+        return getPlayer() + " " + GetType();
     }
 }

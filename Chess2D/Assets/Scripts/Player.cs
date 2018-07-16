@@ -6,27 +6,14 @@ using UnityEngine;
 public class Player {
 
     private Colour colour;
-    private List<Piece> pieces = new List<Piece>();
 
-    public Player(Colour c)
+    public Player()
     {
-        colour = c;
-        //foreach (Square square in Game.getBoard().getSquaresOnBoard())
-        //{
-        //    if (square.getPiece() != null && square.getPiece().getColour() == colour)
-        //    {
-        //        pieces.Add(square.getPiece());
-        //    }
-        //}
+        //colour = c;
     }
 
-    public Colour getColour()
-    {
-        return colour;
-    }
-
-    public List<Piece> getPieces()
-    {
-        return pieces;
-    }
+    //public Colour getColour()
+    //{
+    //    return colour;
+    //}
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Queen : Piece {
 
-    public Queen(Colour colour, Board board, int c, int r) : base(colour, board, c, r)
+    public Queen(Player player, Board board, int c, int r) : base(player, board, c, r)
     {
         value = 9;
     }

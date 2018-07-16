@@ -13,12 +13,9 @@ public class UI : MonoBehaviour {
     private Piece selectedPiece;
     private GameObject[] prevSquares = new GameObject[0];
     private Material[] prevMaterials = new Material[0];
-    private Player player;
-    private Computer computer;
     private Game game;
     private bool ableToMove = true;
     private Square sq;
-    Game g2;
     private Board gameBoard;
 
     // Use this for initialization
@@ -112,23 +109,23 @@ public class UI : MonoBehaviour {
         Destroy(GameObject.Find(square.ToString()).transform.GetChild(0).gameObject);
         if (image.name == "Queen")
         {
-            (selectedPiece as Pawn).promote(square, new Queen(selectedPiece.getColour(), gameBoard, selectedPiece.getPosition().x, selectedPiece.getPosition().y));
+            (selectedPiece as Pawn).promote(square, new Queen(selectedPiece.getPlayer(), gameBoard, selectedPiece.getPosition().x, selectedPiece.getPosition().y));
             
         }
         else if (image.name == "Rook")
         {
-            (selectedPiece as Pawn).promote(square, new Rook(selectedPiece.getColour(), gameBoard, selectedPiece.getPosition().x, selectedPiece.getPosition().y));
+            (selectedPiece as Pawn).promote(square, new Rook(selectedPiece.getPlayer(), gameBoard, selectedPiece.getPosition().x, selectedPiece.getPosition().y));
         }
         else if (image.name == "Bishop")
         {
-            (selectedPiece as Pawn).promote(square, new Bishop(selectedPiece.getColour(), gameBoard, selectedPiece.getPosition().x, selectedPiece.getPosition().y));
+            (selectedPiece as Pawn).promote(square, new Bishop(selectedPiece.getPlayer(), gameBoard, selectedPiece.getPosition().x, selectedPiece.getPosition().y));
         }
         else if (image.name == "Knight")
         {
-            (selectedPiece as Pawn).promote(square, new Knight(selectedPiece.getColour(), gameBoard, selectedPiece.getPosition().x, selectedPiece.getPosition().y));
+            (selectedPiece as Pawn).promote(square, new Knight(selectedPiece.getPlayer(), gameBoard, selectedPiece.getPosition().x, selectedPiece.getPosition().y));
         }
-        GameObject go = (GameObject)Instantiate(Resources.Load(square.getPiece().getColour() + square.getPiece().GetType().ToString()));
-        go.name = square.getPiece().getColour() + square.getPiece().GetType().ToString();
+        GameObject go = (GameObject)Instantiate(Resources.Load(square.getPiece().getPlayer() + square.getPiece().GetType().ToString()));
+        go.name = square.getPiece().getPlayer() + square.getPiece().GetType().ToString();
         go.transform.parent = GameObject.Find(square.ToString()).transform;
         go.transform.position = GameObject.Find(square.ToString()).transform.position;
         selectedPiece = null;
@@ -144,9 +141,6 @@ public class UI : MonoBehaviour {
                 Destroy(GameObject.Find(square.ToString()).transform.GetChild(0).gameObject);
             }
         }
-        //print(gameBoard.getPGN());
-        //print("game1: "+board.getFen());
-        //print("game2: "+g2.getBoard().getFen());
         using (StreamWriter sw = new StreamWriter("Assets/GameStatus.txt", false))
         {
             sw.WriteLine(gameBoard.getFen());
