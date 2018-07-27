@@ -2,87 +2,38 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Piece {
+public abstract class Piece {
 
-    protected List<Square> possibleMoves;
-    private List<Square> attackingSquares;
-    private Player player;
-    protected int value;
-    protected Board board;
-    protected Vector2Int position = new Vector2Int();
+    public Colour colour;
+    public List<Vector2Int> possibleMoves;
 
-    public Piece(Player player, Board board, Vector2Int position)
+    public Piece(Colour colour)
     {
-        this.player = player;
-        this.board = board;
-        this.position = position;
-        attackingSquares = new List<Square>();
+        this.colour = colour;
     }
 
-    public Piece(Player player, Board board, int c, int r) {
-        this.player = player;
-        this.board = board;
-        //position.x = c;
-        //position.y = r;
-        position = new Vector2Int(c, r);
-        attackingSquares = new List<Square>();
-    }
+    public abstract List<Vector2Int> generatePossibleMoves(Board board);
 
-    public Player getPlayer()
+    protected bool checkSquare(Board board, int file, int rank)
     {
-        return player;
-    }
-
-    public int getValue()
-    {
-        return value;
-    }
-
-    protected bool checkSquare(int c, int r)
-    {
-        Board temp = new Board(board.getFen());
-        if (board.getSquare(c, r) == null)
+        if (file < 0 || file > 7 || rank < 0 || rank > 7)
         {
             return false;
         }
-        if (board.getSquare(c, r).isEmpty())
+        if (board.getPiece(file, rank) == null)
         {
-            possibleMoves.Add(board.getSquare(c, r));
+            possibleMoves.Add(new Vector2Int(file, rank));
             return true;
         }
-        else if (board.getSquare(c, r).getPiece().getPlayer() != getPlayer())
+        else if (board.getPiece(file, rank).colour != colour)
         {
-            possibleMoves.Add(board.getSquare(c, r));
+            possibleMoves.Add(new Vector2Int(file, rank));
         }
         return false;
     }
 
-    public virtual List<Square> getPossibleMoves()
-    {
-        return possibleMoves;
-    }
-
-    public List<Square> getAttackingSquares()
-    {
-        attackingSquares = new List<Square>();
-        foreach(Square square in board.getSquaresOnBoard())
-        {
-            if(square.isEmpty() == false && square.getPiece().getPossibleMoves().Contains(board.getSquare(position.x, position.y)))
-            {
-                attackingSquares.Add(square);
-                Debug.Log("Attacked from: " + square+"by"+square.getPiece());
-            }
-        }
-        return attackingSquares;
-    }
-
-    public Vector2Int getPosition()
-    {
-        return position;
-    }
-
     public override string ToString()
     {
-        return getPlayer() + " " + GetType();
+        return colour + " " + base.ToString();
     }
 }

@@ -8,258 +8,185 @@ using UnityEngine.UI;
 
 public class UI : MonoBehaviour {
 
-    //StreamWriter writer = new StreamWriter("Assets/GameStatus.txt", false);
-
+    private Board board;
     private Piece selectedPiece;
+    private GameObject selectedGO;
+    private bool promotingPawn = false;
+
     private GameObject[] prevSquares = new GameObject[0];
     private Material[] prevMaterials = new Material[0];
-    private Game game;
-    private bool ableToMove = true;
-    private Square sq;
-    private Board gameBoard;
 
     // Use this for initialization
     void Start()
     {
-        using(StreamReader sr = new StreamReader("Assets/GameStatus.txt"))
-        {
-            //game = new Game(sr.ReadLine());
-            //game = new Game();
-            gameBoard = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        }
-        updateBoard();
+        board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        updatePieces();
+        //print(FEN.generate(board));
     }
 	
 	// Update is called once per frame
 	void Update () {
+    
         
     }
 
-    public void squareClicked(Image image)
-    {        
-        if(pieceSelected(image) == false)
+    public void squareSelected(Image image)
+    {
+        if(promotingPawn == false)
         {
-            selectedPiece = null;
-            showMovesReset();
-            //ableToMove = true;
-            pieceSelected(image);
+            int file = int.Parse(image.name.Substring(0, 1));
+            int rank = int.Parse(image.name.Substring(2, 1));
+            for (int i = 0; i < prevSquares.Length; i++)
+            {
+                prevSquares[i].GetComponent<Image>().material = prevMaterials[i];
+            }
+            if (selectedPiece != null && selectedPiece.generatePossibleMoves(board).Contains(new Vector2Int(file, rank)))
+            {
+                board.movePiece(board.getPosition(selectedPiece).x, board.getPosition(selectedPiece).y, file, rank);
+                if (selectedPiece.GetType().Equals(typeof(Pawn)) && rank == 7)
+                {
+                    GameObject.Find("Promotion").GetComponent<Canvas>().enabled = true;
+                    promotingPawn = true;
+                }
+                else
+                {
+                    selectedPiece = null;
+                    selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
+                    selectedGO = null;
+                }
+                updatePieces();
+            }
+            else if (selectedPiece != null && !selectedPiece.generatePossibleMoves(board).Contains(new Vector2Int(file, rank)))
+            {
+                selectedGO.transform.localPosition = Vector3.zero;
+                selectedPiece = null;
+                selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
+                selectedGO = null;
+            }
+            if (board.getPiece(file, rank) != null && ((board.getPiece(file, rank).colour == Colour.White && board.whitesTurn) || (board.getPiece(file, rank).colour == Colour.Black && !board.whitesTurn)))
+            {
+                List<Vector2Int> possibleMoves = board.getPiece(file, rank).generatePossibleMoves(board);
+                prevMaterials = new Material[possibleMoves.Count + 1];
+                prevSquares = new GameObject[possibleMoves.Count + 1];
+                for (int i = 0; i < possibleMoves.Count; i++)
+                {
+                    Vector2Int sq = possibleMoves[i];
+                    prevMaterials[i] = GameObject.Find(sq.x.ToString() + "," + sq.y.ToString()).GetComponent<Image>().material;
+                    prevSquares[i] = GameObject.Find(sq.x.ToString() + "," + sq.y.ToString());
+                    GameObject.Find(sq.x.ToString() + "," + sq.y.ToString()).GetComponent<Image>().material = (Material)Resources.Load("Materials/SelectedSquare");
+                }
+                prevMaterials[prevMaterials.Length - 1] = image.material;
+                prevSquares[prevSquares.Length - 1] = GameObject.Find(image.gameObject.name);
+                image.material = (Material)Resources.Load("Materials/SelectedSquare");
+                selectedPiece = board.getPiece(file, rank);
+                selectedGO = GameObject.Find(file + "," + rank).transform.GetChild(0).gameObject;
+                selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 2;
+            }
         }
     }
 
-    private bool pieceSelected(Image image)
+    public void onDragPiece()
     {
-        sq = gameBoard.getSquare(image.gameObject.name);
-        Square square = gameBoard.getSquare(image.gameObject.name);
-        if (square.getPiece() != null && selectedPiece == null && ableToMove == true) //clicked piece to move
+        if(selectedPiece != null && promotingPawn == false)
         {
-            Piece piece = square.getPiece();
-            //piece.getAttackingSquares();
-            //piece.updatePossibleMoves();
-            //if (square.Piece().getColour().Equals(player.getColour()))
-            //{
-                prevMaterials = new Material[piece.getPossibleMoves().Count + 1];
-                prevSquares = new GameObject[piece.getPossibleMoves().Count + 1];
-                for (int i = 0; i < piece.getPossibleMoves().Count; i++)
-                {
-                    Square sq = piece.getPossibleMoves()[i];
-                    prevMaterials[i] = GameObject.Find(sq.ToString()).GetComponent<Image>().material;
-                    prevSquares[i] = GameObject.Find(sq.ToString());
-                    GameObject.Find(sq.ToString()).GetComponent<Image>().material = (Material)Resources.Load("Materials/SelectedSquare");
-                }
-                prevMaterials[prevMaterials.Length - 1] = image.material;
-                prevSquares[prevSquares.Length - 1] = GameObject.Find(square.ToString());
-                image.material = (Material)Resources.Load("Materials/SelectedSquare");
-                selectedPiece = piece;
-            //}
-            return true;
-        }
-        else if (selectedPiece != null && gameBoard.getSquare(selectedPiece).getPiece().getPossibleMoves().Contains(square) && ableToMove == true) //move piece
-        {
-            gameBoard.movePiece(selectedPiece, gameBoard.getSquare(selectedPiece), square, true);
-            updateBoard();
-            //gameBoard.isCheck();
-            if (square.getRow() == 8 && selectedPiece.GetType().Equals(typeof(Pawn)))
+            Vector3 v = Input.mousePosition;
+            v.z = 100;
+            v = Camera.main.ScreenToWorldPoint(v);
+            if (Input.GetMouseButtonUp(0))
             {
-                GameObject.Find("Promotion").GetComponent<Canvas>().enabled = true;
-                ableToMove = false;
+                squareSelected(selectedGO.transform.parent.GetComponent<Image>());
             }
             else
             {
-                selectedPiece = null;
-                ableToMove = true;
+                v.x = Mathf.Clamp(v.x, -50, 50);
+                v.y = Mathf.Clamp(v.y, -50, 50);
+                selectedGO.transform.position = v;
             }
-            showMovesReset();
-            return true;
-        }
-        return false;
-    }
-
-    private void showMovesReset()
-    {
-        for (int i = 0; i < prevSquares.Length; i++)
-        {
-            prevSquares[i].GetComponent<Image>().material = prevMaterials[i];
         }
     }
 
     public void selectPromotion(Image image)
     {
         GameObject.Find("Promotion").GetComponent<Canvas>().enabled = false;
-        Square square = gameBoard.getSquare(selectedPiece);
-        Destroy(GameObject.Find(square.ToString()).transform.GetChild(0).gameObject);
+        Vector2Int square = board.getPosition(selectedPiece);
+        Destroy(GameObject.Find(square.x.ToString() + "," + square.y.ToString()).transform.GetChild(0).gameObject);
         if (image.name == "Queen")
         {
-            (selectedPiece as Pawn).promote(square, new Queen(selectedPiece.getPlayer(), gameBoard, selectedPiece.getPosition().x, selectedPiece.getPosition().y));
-            
+            board.squares[square.x, square.y] = new Queen(selectedPiece.colour);
         }
         else if (image.name == "Rook")
         {
-            (selectedPiece as Pawn).promote(square, new Rook(selectedPiece.getPlayer(), gameBoard, selectedPiece.getPosition().x, selectedPiece.getPosition().y));
+            board.squares[square.x, square.y] = new Rook(selectedPiece.colour);
         }
         else if (image.name == "Bishop")
         {
-            (selectedPiece as Pawn).promote(square, new Bishop(selectedPiece.getPlayer(), gameBoard, selectedPiece.getPosition().x, selectedPiece.getPosition().y));
+            board.squares[square.x, square.y] = new Bishop(selectedPiece.colour);
         }
         else if (image.name == "Knight")
         {
-            (selectedPiece as Pawn).promote(square, new Knight(selectedPiece.getPlayer(), gameBoard, selectedPiece.getPosition().x, selectedPiece.getPosition().y));
+            board.squares[square.x, square.y] = new Knight(selectedPiece.colour);
         }
-        GameObject go = (GameObject)Instantiate(Resources.Load(square.getPiece().getPlayer() + square.getPiece().GetType().ToString()));
-        go.name = square.getPiece().getPlayer() + square.getPiece().GetType().ToString();
-        go.transform.parent = GameObject.Find(square.ToString()).transform;
-        go.transform.position = GameObject.Find(square.ToString()).transform.position;
-        selectedPiece = null;
-        ableToMove = true;
+        selectedGO = (GameObject)Instantiate(Resources.Load(board.getPiece(square.x, square.y).ToString().Replace(" ", string.Empty)));
+        selectedGO.name = board.getPiece(square.x, square.y).ToString();
+        selectedGO.transform.parent = GameObject.Find(square.x.ToString() + "," + square.y.ToString()).transform;
+        selectedGO.transform.position = GameObject.Find(square.x.ToString() + "," + square.y.ToString()).transform.position;
+        promotingPawn = false;
+        //selectedPiece = null;
     }
 
-    public void updateBoard()
+    public void updatePieces()
     {
-        foreach (Square square in gameBoard.getSquaresOnBoard())
+        for (int i = 0; i < 8; i++)
         {
-            if (GameObject.Find(square.ToString()).transform.childCount != 0)
+            for (int j = 0; j < 8; j++)
             {
-                Destroy(GameObject.Find(square.ToString()).transform.GetChild(0).gameObject);
-            }
-        }
-        using (StreamWriter sw = new StreamWriter("Assets/GameStatus.txt", false))
-        {
-            sw.WriteLine(gameBoard.getFen());
-        }
-        string board = gameBoard.ToString();
-        string alphabet = "ABCDEFGH";
-        int rank = 8;
-        int file = 0;
-        foreach(char c in board)
-        {
-            int number;
-            bool isNumber = int.TryParse(c.ToString(), out number);
-            file++;
-            if (c.Equals('/'))
-            {
-                rank--;
-                file = 0;
-            }
-            else if (c.Equals('r'))
-            {
-                GameObject go = (GameObject)Instantiate(Resources.Load("BlackRook"));
-                go.name = "Black Rook";
-                go.transform.parent = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform;
-                go.transform.position = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform.position;
-            }
-            else if (c.Equals('n'))
-            {
-                GameObject go = (GameObject)Instantiate(Resources.Load("BlackKnight"));
-                go.name = "Black Knight";
-                go.transform.parent = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform;
-                go.transform.position = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform.position;
-            }
-            else if (c.Equals('b'))
-            {
-                GameObject go = (GameObject)Instantiate(Resources.Load("BlackBishop"));
-                go.name = "Black Bishop";
-                go.transform.parent = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform;
-                go.transform.position = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform.position;
-            }
-            else if (c.Equals('q'))
-            {
-                GameObject go = (GameObject)Instantiate(Resources.Load("BlackQueen"));
-                go.name = "Black Queen";
-                go.transform.parent = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform;
-                go.transform.position = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform.position;
-            }
-            else if (c.Equals('k'))
-            {
-                GameObject go = (GameObject)Instantiate(Resources.Load("BlackKing"));
-                go.name = "Black King";
-                go.transform.parent = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform;
-                go.transform.position = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform.position;
-            }
-            else if (c.Equals('p'))
-            {
-                GameObject go = (GameObject)Instantiate(Resources.Load("BlackPawn"));
-                go.name = "Black Pawn";
-                go.transform.parent = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform;
-                go.transform.position = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform.position;
-            }
-            else if (c.Equals('R'))
-            {
-                GameObject go = (GameObject)Instantiate(Resources.Load("WhiteRook"));
-                go.name = "White Rook";
-                go.transform.parent = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform;
-                go.transform.position = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform.position;
-            }
-            else if (c.Equals('N'))
-            {
-                GameObject go = (GameObject)Instantiate(Resources.Load("WhiteKnight"));
-                go.name = "White Knight";
-                go.transform.parent = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform;
-                go.transform.position = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform.position;
-            }
-            else if (c.Equals('B'))
-            {
-                GameObject go = (GameObject)Instantiate(Resources.Load("WhiteBishop"));
-                go.name = "White Bishop";
-                go.transform.parent = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform;
-                go.transform.position = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform.position;
-            }
-            else if (c.Equals('Q'))
-            {
-                GameObject go = (GameObject)Instantiate(Resources.Load("WhiteQueen"));
-                go.name = "White Queen";
-                go.transform.parent = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform;
-                go.transform.position = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform.position;
-            }
-            else if (c.Equals('K'))
-            {
-                GameObject go = (GameObject)Instantiate(Resources.Load("WhiteKing"));
-                go.name = "White King";
-                go.transform.parent = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform;
-                go.transform.position = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform.position;
-            }
-            else if (c.Equals('P'))
-            {
-                GameObject go = (GameObject)Instantiate(Resources.Load("WhitePawn"));
-                go.name = "White Pawn";
-                go.transform.parent = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform;
-                go.transform.position = GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform.position;
-            }
-            else if (isNumber)
-            {
-                for (int i = file; i < file + number; i++)
+                if (GameObject.Find(i.ToString() + "," + j.ToString()).transform.childCount != 0)
                 {
-                    if(GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform.childCount != 0)
-                    {
-                        Destroy(GameObject.Find(alphabet.Substring(file - 1, 1) + rank).transform.GetChild(0).gameObject);
-                    }
+                    Destroy(GameObject.Find(i.ToString() + "," + j.ToString()).transform.GetChild(0).gameObject);
                 }
-                file = file + number - 1;;
+                if (board.squares[i,j] != null)
+                {
+                    GameObject go = (GameObject)Instantiate(Resources.Load(board.squares[i, j].ToString().Replace(" ", string.Empty)));
+                    go.name = board.squares[i, j].ToString();
+                    go.transform.parent = GameObject.Find(i.ToString() + "," + j.ToString()).transform;
+                    go.transform.position = GameObject.Find(i.ToString() + "," + j.ToString()).transform.position;
+                }
             }
-            updateMoves();
         }
+        updateMoves();
     }
 
     public void updateMoves()
     {
-        //GameObject.Find("Moves").GetComponent<Text>().text = game.getPGN();
+        //GameObject.Find("Moves").GetComponent<Text>().text += board.moves[board.moves.Count-1];
+        string whiteMoves = "";
+        string blackMoves = "";
+        for (int i = 0; i < board.moves.Count; i++)
+        {
+            if (i % 2 == 0)
+            {
+                whiteMoves += (i/2+1) + ". " + board.moves[i] + "\n";
+            }
+            else
+            {
+                blackMoves += board.moves[i] + "\n";
+            }
+        }
+        GameObject.Find("White Moves").GetComponent<Text>().text = whiteMoves;
+        GameObject.Find("Black Moves").GetComponent<Text>().text = blackMoves;
+    }
+
+    public void fenEntered(InputField fenInput)
+    {
+        print(fenInput.text);
+        try
+        {
+            board = new Board(fenInput.text);
+        }
+        catch
+        {
+        }
+        fenInput.text = "";
+        updatePieces();
     }
 }

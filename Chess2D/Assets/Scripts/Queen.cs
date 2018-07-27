@@ -4,79 +4,77 @@ using UnityEngine;
 
 public class Queen : Piece {
 
-    public Queen(Player player, Board board, int c, int r) : base(player, board, c, r)
+    public Queen(Colour colour) : base(colour)
     {
-        value = 9;
+
     }
 
-    public override List<Square> getPossibleMoves()
+    public override List<Vector2Int> generatePossibleMoves(Board board)
     {
-        possibleMoves = new List<Square>();
-        int column = board.getSquare(this).getColumn();
-        int row = board.getSquare(this).getRow();
+        possibleMoves = new List<Vector2Int>();
+        int file = board.getPosition(this).x;
+        int rank = board.getPosition(this).y;
 
-        for (int i = column - 1; i > 0; i--)
+        for (int i = file - 1; i >= 0; i--)
         {
-            if (checkSquare(i, row) == false)
+            if (checkSquare(board, i, rank) == false)
             {
                 break;
             }
         }
-        for (int i = column + 1; i < 9; i++)
+        for (int i = file + 1; i <= 7; i++)
         {
-            if (checkSquare(i, row) == false)
+            if (checkSquare(board, i, rank) == false)
             {
                 break;
             }
         }
-        for (int i = row - 1; i > 0; i--)
+        for (int i = rank - 1; i >= 0; i--)
         {
-            if (checkSquare(column, i) == false)
+            if (checkSquare(board, file, i) == false)
             {
                 break;
             }
         }
-        for (int i = row + 1; i < 9; i++)
+        for (int i = rank + 1; i <= 7; i++)
         {
-            if (checkSquare(column, i) == false)
+            if (checkSquare(board, file, i) == false)
             {
                 break;
             }
         }
-
-        int r = row - 1;
-        for (int c = column - 1; c > 0 && r > 0; c--, r--)
+        int r = rank - 1;
+        for (int f = file - 1; f >= 0 && r >= 0; f--, r--)
         {
-            if (checkSquare(c, r) == false)
+            if (checkSquare(board, f, r) == false)
             {
                 break;
             }
         }
-        r = row + 1;
-        for (int c = column + 1; c < 9 && r < 9; c++, r++)
+        r = rank + 1;
+        for (int f = file + 1; f <= 7 && r <= 7; f++, r++)
         {
-            if (checkSquare(c, r) == false)
+            if (checkSquare(board, f, r) == false)
             {
                 break;
             }
         }
-        r = row + 1;
-        for (int c = column - 1; c > 0 && r < 9; c--, r++)
+        r = rank + 1;
+        for (int f = file - 1; f >= 0 && r <= 7; f--, r++)
         {
-            if (checkSquare(c, r) == false)
+            if (checkSquare(board, f, r) == false)
             {
                 break;
             }
         }
-        r = row - 1;
-        for (int c = column + 1; c < 9 && r > 0; c++, r--)
+        r = rank - 1;
+        for (int f = file + 1; f <= 7 && r >= 0; f++, r--)
         {
-            if (checkSquare(c, r) == false)
+            if (checkSquare(board, f, r) == false)
             {
                 break;
             }
         }
-
         return possibleMoves;
     }
 }

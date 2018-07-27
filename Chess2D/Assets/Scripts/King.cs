@@ -4,46 +4,60 @@ using UnityEngine;
 
 public class King : Piece {
 
-    private List<Square> checkPath;
-
-    public King(Player player, Board board, int c, int r) : base(player, board, c, r)
+    public King(Colour colour) : base(colour)
     {
-        value = 100;
+
     }
 
-    public override List<Square> getPossibleMoves()
+    public override List<Vector2Int> generatePossibleMoves(Board board)
     {
-        possibleMoves = new List<Square>();
-        int column = board.getSquare(this).getColumn();
-        int row = board.getSquare(this).getRow();
+        possibleMoves = new List<Vector2Int>();
+        int file = board.getPosition(this).x;
+        int rank = board.getPosition(this).y;
 
-        checkSquare(column - 1, row + 1);
-        checkSquare(column, row + 1);
-        checkSquare(column + 1, row + 1);
-        checkSquare(column - 1, row);
-        checkSquare(column, row);
-        checkSquare(column + 1, row);
-        checkSquare(column - 1, row - 1);
-        checkSquare(column, row - 1);
-        checkSquare(column + 1, row - 1);
+        checkSquare(board, file - 1, rank + 1);
+        checkSquare(board, file, rank + 1);
+        checkSquare(board, file + 1, rank + 1);
+        checkSquare(board, file - 1, rank);
+        checkSquare(board, file, rank);
+        checkSquare(board, file + 1, rank);
+        checkSquare(board, file - 1, rank - 1);
+        checkSquare(board, file, rank - 1);
+        checkSquare(board, file + 1, rank - 1);
 
-        if(getPlayer() == board.player1 && board.wqCastle == true && board.getSquare("B1").isEmpty() && board.getSquare("C1").isEmpty() && board.getSquare("D1").isEmpty())
+        if (colour == Colour.White && board.wqCastle == true && board.squares[1,0] == null && board.squares[2, 0] == null && board.squares[3, 0] == null)
         {
-            possibleMoves.Add(board.getSquare("C1"));
+            possibleMoves.Add(new Vector2Int(2, 0));
         }
-        if (getPlayer() == board.player1 && board.wkCastle == true && board.getSquare("F1").isEmpty() && board.getSquare("G1").isEmpty())
+        if (colour == Colour.White && board.wkCastle == true && board.squares[5, 0] == null && board.squares[6, 0] == null)
         {
-            possibleMoves.Add(board.getSquare("G1"));
+            possibleMoves.Add(new Vector2Int(6, 0));
         }
-        else if (getPlayer() == board.player2 && board.bqCastle == true && board.getSquare("B8").isEmpty() && board.getSquare("C8").isEmpty() && board.getSquare("D8").isEmpty())
+        else if (colour == Colour.Black && board.bqCastle == true && board.squares[1, 7] == null && board.squares[2, 7] == null && board.squares[3, 7] == null)
         {
-            possibleMoves.Add(board.getSquare("C8"));
+            possibleMoves.Add(new Vector2Int(2, 7));
         }
-        if (getPlayer() == board.player2 && board.bkCastle == true && board.getSquare("F8").isEmpty() && board.getSquare("G8").isEmpty())
+        if (colour == Colour.Black && board.bkCastle == true && board.squares[5, 7] == null && board.squares[6, 7] == null)
         {
-            possibleMoves.Add(board.getSquare("G8"));
+            possibleMoves.Add(new Vector2Int(6, 7));
         }
 
         return possibleMoves;
+    }
+
+    public bool isCheck(Board board)
+    {
+        foreach(Piece p in board.squares)
+        {
+            if (p != null)
+            {
+                if (p != null && p.possibleMoves.Contains(board.getPosition(this)))
+                {
+                    Debug.Log("Check!");
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

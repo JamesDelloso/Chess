@@ -1,387 +1,165 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
-using System.Runtime.Serialization;
 
 public class Board {
 
-    private List<Square> squares;
-    private string fen;
-
-    public Player player1;
-    public Player player2;
-
+    //private string fen;
+    public Piece[,] squares = new Piece[8, 8];
+    public Vector2Int? enPassant;
+    BitArray ba = new BitArray(64);
+    public bool whitesTurn = true;
+    public bool wkCastle = false;
+    public bool wqCastle = false;
+    public bool bkCastle = false;
+    public bool bqCastle = false;
+    public int halfMove = 0;
+    public float fullMove = 1;
     public King wKing;
     public King bKing;
-
-    private bool whitesTurn = true;
-    public bool wkCastle = true;
-    public bool wqCastle = true;
-    public bool bkCastle = true;
-    public bool bqCastle = true;
-    private Square enPassant = null;
-    private Piece enPassantPiece = null;
-    private int halfMove = 0;
-    private float fullMove = 1;
-    private string pgn = "";
+    public List<string> moves = new List<string>();
 
     public Board(string fen)
     {
-        player1 = new Player();
-        player2 = new Player();
-        squares = new List<Square>();
-        //fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-        //fen = "8/1k3n2/2BQ4/8/4b3/8/2K3p1/3R4 w - - 0 1";
-        //fen = "8/1k3n2/2B5/8/8/8/2K3p1/3R4 w - - 0 1";
-        string board = fen.Split(' ')[0];
-
-        int rank = 8;
-        int file = 0;
-        foreach (char c in board)
+        squares = FEN.readBoard(fen);
+        if (fen.Split(' ')[1] == "w") whitesTurn = true;
+        else whitesTurn = false;
+        foreach(char c in fen.Split(' ')[2])
         {
-            int number;
-            bool isNumber = int.TryParse(c.ToString(), out number);
-            file++;
-            if (c.Equals('/'))
-            {
-                rank--;
-                file = 0;
-            }
-            else if (c.Equals('r'))
-            {
-                squares.Add(new Square(file, rank, new Rook(player2, this, file, rank), this));
-                //Debug.Log(file + "," + rank);
-            }
-            else if (c.Equals('n'))
-            {
-                squares.Add(new Square(file, rank, new Knight(player2, this, file, rank), this));
-            }
-            else if (c.Equals('b'))
-            {
-                squares.Add(new Square(file, rank, new Bishop(player2, this, file, rank), this));
-            }
-            else if (c.Equals('q'))
-            {
-                squares.Add(new Square(file, rank, new Queen(player2, this, file, rank), this));
-            }
-            else if (c.Equals('k'))
-            {
-                bKing = new King(player2, this, file, rank);
-                squares.Add(new Square(file, rank, bKing, this));
-            }
-            else if (c.Equals('p'))
-            {
-                squares.Add(new Square(file, rank, new Pawn(player2, this, file, rank), this));
-            }
-            else if (c.Equals('R'))
-            {
-                squares.Add(new Square(file, rank, new Rook(player1, this, file, rank), this));
-            }
-            else if (c.Equals('N'))
-            {
-                squares.Add(new Square(file, rank, new Knight(player1, this, file, rank), this));
-            }
-            else if (c.Equals('B'))
-            {
-                squares.Add(new Square(file, rank, new Bishop(player1, this, file, rank), this));
-            }
-            else if (c.Equals('Q'))
-            {
-                squares.Add(new Square(file, rank, new Queen(player1, this, file, rank), this));
-            }
-            else if (c.Equals('K'))
-            {
-                wKing = new King(player1, this, file, rank);
-                squares.Add(new Square(file, rank, wKing, this));
-            }
-            else if (c.Equals('P'))
-            {
-                squares.Add(new Square(file, rank, new Pawn(player1, this, file, rank), this));
-            }
-            else if (isNumber)
-            {
-                for (int i=file;i<file+number;i++)
-                {
-                    squares.Add(new Square(i, rank, null, this));
-                }
-                file = file + number - 1;
-            }
+            if (c == 'K') wkCastle = true;
+            if (c == 'Q') wqCastle = true;
+            if (c == 'k') bkCastle = true;
+            if (c == 'q') bqCastle = true;
         }
+        if(fen.Split(' ')[3] != "-")
+        {
+            string letters = "abcdefgh";
+            enPassant = new Vector2Int(letters.IndexOf(fen.Split(' ')[3].Substring(0, 1)), int.Parse(fen.Split(' ')[3].Substring(1, 1)) - 1);
+        }
+        halfMove = int.Parse(fen.Split(' ')[4]);
+        fullMove = int.Parse(fen.Split(' ')[5]);
+
+        wKing = (King)squares[4, 0];
+        bKing = (King)squares[4, 7];
     }
 
-    public void movePiece(Piece piece, Square from, Square to, bool simulatedMove)
+    public void movePiece(int fromX, int fromY, int toX, int toY)
     {
-        //Board temp = new Board(getFen());
-        //temp.getSquare(from.ToString()).removePiece();
-        //temp.getSquare(to.ToString()).addPiece(temp.getSquare(piece.getPosition().x, piece.getPosition().y).getPiece());
-        //Debug.Log(temp.getFen());
-        whitesTurn = !whitesTurn;
-        if (enPassant != null)
+        halfMove++;
+        Piece piece = getPiece(fromX, fromY);
+        if (piece.GetType().Equals(typeof(Pawn)) && enPassant.Equals(new Vector2Int(toX, toY)))
         {
-            if (piece.GetType().Equals((typeof(Pawn))) && to.ToString().Equals(enPassant.ToString()))
+            if(piece.colour == Colour.White)
             {
-                getSquare(enPassantPiece).removePiece();
+                squares[toX, 4] = null;
             }
-            enPassant.enPassant = false;
-            enPassant.enPassantPiece = null;
-            enPassant = null;
-            enPassantPiece = null;
+            else
+            {
+                squares[toX, 3] = null;
+            }
         }
-        fullMove += 0.5f;
-
+        enPassant = null;
         if (piece.GetType().Equals(typeof(Pawn)))
         {
-            (piece as Pawn).startingPos = false;
-        }
-
-        if (piece.GetType().Equals((typeof(Pawn))) && Mathf.Abs(from.getRow() - to.getRow()) == 2)
-        {
-            enPassant = getSquare(from.getColumn(), (from.getRow() + to.getRow()) / 2);
-            enPassantPiece = piece;
-            getSquare(from.getColumn(), (from.getRow() + to.getRow()) / 2).enPassant = true;
-            getSquare(from.getColumn(), (from.getRow() + to.getRow()) / 2).enPassantPiece = piece;
-        }
-        else if (piece.GetType().Equals((typeof(King))) && piece.getPlayer() == player1)
-        {
-            if (from.ToString().Equals("E1") && to.ToString().Equals("G1"))
+            if(Mathf.Abs(fromY - toY) == 2)
             {
-                getSquare("F1").addPiece(getSquare("H1").getPiece());
-                getSquare("H1").removePiece();
+                enPassant = new Vector2Int(fromX, (fromY + toY) / 2);
             }
-            else if (from.ToString().Equals("E1") && to.ToString().Equals("C1"))
+            halfMove = 0;
+        }
+        else if(piece.GetType().Equals(typeof(King)) && piece.colour == Colour.White)
+        {
+            if(fromX == 4 && fromY == 0 && toX == 6 && toY == 0)
             {
-                getSquare("D1").addPiece(getSquare("A1").getPiece());
-                getSquare("A1").removePiece();
+                squares[5, 0] = getPiece(7, 0);
+                squares[7, 0] = null;
+            }
+            else if(fromX == 4 && fromY == 0 && toX == 2 && toY == 0)
+            {
+                squares[3, 0] = getPiece(0, 0);
+                squares[0, 0] = null;
             }
             wkCastle = false;
             wqCastle = false;
         }
-        else if (piece.GetType().Equals((typeof(King))) && piece.getPlayer() == player2)
+        else if (piece.GetType().Equals(typeof(King)) && piece.colour == Colour.Black)
         {
-            if (from.ToString().Equals("E8") && to.ToString().Equals("G8"))
+            if (fromX == 4 && fromY == 7 && toX == 6 && toY == 7)
             {
-                getSquare("F8").addPiece(getSquare("H8").getPiece());
-                getSquare("H8").removePiece();
+                squares[5, 7] = getPiece(7, 7);
+                squares[7, 7] = null;
             }
-            else if (from.ToString().Equals("E8") && to.ToString().Equals("C8"))
+            else if (fromX == 4 && fromY == 7 && toX == 2 && toY == 7)
             {
-                getSquare("D8").addPiece(getSquare("A8").getPiece());
-                getSquare("A8").removePiece();
+                squares[3, 7] = getPiece(0, 7);
+                squares[0, 7] = null;
             }
             bkCastle = false;
             bqCastle = false;
         }
-        else if (piece.GetType().Equals((typeof(Rook))) && piece.getPlayer() == player1 && from.ToString().Equals("A1"))
+        else if (piece.GetType().Equals((typeof(Rook))) && piece.colour == Colour.White && fromX == 0 && fromY == 0)
         {
             wqCastle = false;
         }
-        else if (piece.GetType().Equals((typeof(Rook))) && piece.getPlayer() == player1 && from.ToString().Equals("H1"))
+        else if (piece.GetType().Equals((typeof(Rook))) && piece.colour == Colour.White && fromX == 7 && fromY == 0)
         {
             wkCastle = false;
         }
-        else if (piece.GetType().Equals((typeof(Rook))) && piece.getPlayer() == player2 && from.ToString().Equals("A8"))
+        else if (piece.GetType().Equals((typeof(Rook))) && piece.colour == Colour.Black && fromX == 0 && fromY == 7)
         {
             bqCastle = false;
         }
-        else if (piece.GetType().Equals((typeof(Rook))) && piece.getPlayer() == player2 && from.ToString().Equals("H8"))
+        else if (piece.GetType().Equals((typeof(Rook))) && piece.colour == Colour.Black && fromX == 7 && fromY == 7)
         {
             bkCastle = false;
         }
-        addToPGN(piece, to);
-        from.removePiece();
-        to.addPiece(piece);
-    }
-
-    public bool isCheck()
-    {
-        if(wKing.getAttackingSquares().Count > 0)
+        if(squares[toX, toY] != null)
         {
-            Debug.Log("Check on White");
-            //wKing.getCheckPath();
-            return true;
+            halfMove = 0;
         }
-        if(bKing.getAttackingSquares().Count > 0)
+        moves.Add(PGN.convert(this, piece, fromX, toX, toY));
+        squares[toX, toY] = piece;
+        squares[fromX, fromY] = null;
+        whitesTurn = !whitesTurn;
+        fullMove += 0.5f;
+        Debug.Log(FEN.generate(this));
+        //wKing.isCheck(this);
+        updatePieces();
+    }
+
+    public void updatePieces()
+    {
+        foreach (Piece p in squares)
         {
-            Debug.Log("Check on Black");
-            return true;
-        }
-        return false;
-    }
-
-    public void setPiece(Piece piece, Square to)
-    {
-        to.addPiece(piece);
-    }
-
-    public void removePiece(Square square)
-    {
-        square.removePiece();
-    }
-
-    public List<Square> getSquaresOnBoard()
-    {
-        return squares;
-    }
-
-    public Square getSquare(Piece piece)
-    {
-        foreach (Square square in squares)
-        {
-            if(square.isEmpty() == false)
+            if(p != null)
             {
-                if (square.getPiece().Equals(piece))
+                p.generatePossibleMoves(this);
+            }
+        }
+    }
+
+    public Piece getPiece(int file, int rank)
+    {
+        return squares[file, rank];
+    }
+
+    public Piece getPiece(Vector2Int pos)
+    {
+        return squares[pos.x, pos.y];
+    }
+
+    public Vector2Int getPosition(Piece piece)
+    {
+        for(int i=0;i<8;i++)
+        {
+            for(int j=0;j<8;j++)
+            {
+                if(squares[i,j] != null && squares[i,j].Equals(piece))
                 {
-                    return square;
+                    return new Vector2Int(i, j);
                 }
             }
         }
-        return null;
-    }
-
-    public Square getSquare(string name)
-    {
-        foreach (Square square in squares)
-        {
-            if (square.ToString() == name)
-            {
-                return square;
-            }
-        }
-        return null;
-    }
-
-    public Square getSquare(int column, int row)
-    {
-        foreach (Square square in squares)
-        {
-            if (square.getColumn() == column && square.getRow() == row)
-            {
-                return square;
-            }
-        }
-        return null;
-    }
-
-    public string getFen()
-    {
-        string fen = ToString();
-        if (whitesTurn) fen += " w ";
-        else fen += " b ";
-        if (wkCastle) fen += "K";
-        if (wqCastle) fen += "Q";
-        if (bkCastle) fen += "k";
-        if (bqCastle) fen += "q";
-        if (enPassant == null) fen += " - ";
-        else fen += " " + enPassant.ToString().ToLower() + " ";
-        fen += halfMove + " " + (int)fullMove;
-        return fen;
-    }
-
-    public string addToPGN(Piece piece, Square to)
-    {
-        bool castled = false;
-        if (piece.getPlayer() == player1)
-        {
-            pgn += (int)fullMove + ".  ";
-        }
-        if (piece.GetType().Equals(typeof(Rook)))
-        {
-            pgn += "R";
-        }
-        else if (piece.GetType().Equals(typeof(Bishop)))
-        {
-            pgn += "B";
-        }
-        else if (piece.GetType().Equals(typeof(Knight)))
-        {
-            pgn += "N";
-        }
-        else if (piece.GetType().Equals(typeof(Queen)))
-        {
-            pgn += "Q";
-        }
-        else if (piece.GetType().Equals(typeof(King)))
-        {
-            Square from = getSquare(piece);
-            if (from.getColumn() == 5 && to.getColumn() == 3)
-            {
-                pgn += "O-O-O ";
-                castled = true;
-            }
-            else if (from.getColumn() == 5 && to.getColumn() == 7)
-            {
-                pgn += "O-O ";
-                castled = true;
-            }
-            else
-            {
-                pgn += "K";
-            }
-        }
-        if (to.isEmpty() == false)
-        {
-            pgn += "x";
-        }
-        if (castled == false)
-        {
-            pgn += to.ToString().ToLower() + " ";
-        }
-        return pgn;
-    }
-
-    public string getPGN()
-    {
-        return pgn;
-    }
-
-    public override string ToString()
-    {
-        //  rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -1 2
-        string fen = "";
-        int file = 0;
-        int num = 0;
-        squares.Reverse<Square>();
-        for(int i=0;i<squares.Count;i++)
-        {
-            file++;
-            if(squares[i].isEmpty())
-            {
-                num++;
-            }
-            else
-            {
-                string letter = squares[i].getPiece().GetType().ToString().Substring(0, 1);
-                if (squares[i].getPiece().GetType().Equals(typeof(Knight)))
-                {
-                    letter = "N";
-                }
-                if (squares[i].getPiece().getPlayer() == player2)
-                {
-                    letter = letter.ToLower();
-                }
-                if(num > 0)
-                {
-                    fen += num;
-                }
-                fen += letter;
-                num = 0;
-            }
-            if(file >= 8)
-            {
-                if(num > 0)
-                {
-                    fen += num;
-                }
-                fen += "/";
-                file = 0;
-                num = 0;
-            }
-        }
-        fen = fen.Remove(fen.Length - 1);
-        return fen;
+        return new Vector2Int(-1, -1);
     }
 }

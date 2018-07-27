@@ -4,25 +4,25 @@ using UnityEngine;
 
 public class Knight : Piece {
 
-    public Knight(Player player, Board board, int c, int r) : base(player, board, c, r)
+    public Knight(Colour colour) : base(colour)
     {
-        value = 3;
+
     }
 
-    public override List<Square> getPossibleMoves()
+    public override List<Vector2Int> generatePossibleMoves(Board board)
     {
-        possibleMoves = new List<Square>();
-        int column = board.getSquare(this).getColumn();
-        int row = board.getSquare(this).getRow();
+        possibleMoves = new List<Vector2Int>();
+        int file = board.getPosition(this).x;
+        int rank = board.getPosition(this).y;
 
-        checkSquare(column - 2, row - 1);
-        checkSquare(column - 1, row - 2);
-        checkSquare(column + 2, row - 1);
-        checkSquare(column + 1, row - 2);
-        checkSquare(column - 2, row + 1);
-        checkSquare(column - 1, row + 2);
-        checkSquare(column + 2, row + 1);
-        checkSquare(column + 1, row + 2);
+        checkSquare(board, file - 2, rank - 1);
+        checkSquare(board, file - 1, rank - 2);
+        checkSquare(board, file + 2, rank - 1);
+        checkSquare(board, file + 1, rank - 2);
+        checkSquare(board, file - 2, rank + 1);
+        checkSquare(board, file - 1, rank + 2);
+        checkSquare(board, file + 2, rank + 1);
+        checkSquare(board, file + 1, rank + 2);
 
         return possibleMoves;
     }

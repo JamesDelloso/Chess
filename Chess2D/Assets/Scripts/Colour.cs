@@ -2,7 +2,4 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum Colour {
-    White,
-    Black
-}
+public enum Colour { White, Black }

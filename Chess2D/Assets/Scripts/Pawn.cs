@@ -4,62 +4,56 @@ using UnityEngine;
 
 public class Pawn : Piece {
 
-    private int column;
-    public bool startingPos;
+    private int file;
 
-    public Pawn(Player player, Board board, int c, int r) : base(player, board, c, r)
+    public Pawn(Colour colour) : base(colour)
     {
-        startingPos = true;
-        value = 1;
+
     }
 
-    public void promote(Square to, Piece piece)
+    public override List<Vector2Int> generatePossibleMoves(Board board)
     {
-        to.addPiece(piece);
-    }
-
-    public void move()
-    {
-        startingPos = false;
-    }
-    public override List<Square> getPossibleMoves()
-    {
-        possibleMoves = new List<Square>();
-        column = board.getSquare(this).getColumn();
-        int row = board.getSquare(this).getRow();
+        possibleMoves = new List<Vector2Int>();
+        file = board.getPosition(this).x;
+        int rank = board.getPosition(this).y;
 
         int dir = 1;
-        if(getPlayer() == board.player2)
+        if (colour == Colour.Black)
         {
             dir = -1;
         }
 
-        checkPawnSquare(column - 1, row + dir);
-        checkPawnSquare(column + 1, row + dir);
-        bool check = checkPawnSquare(column, row + dir);
+        checkPawnSquare(board, file - 1, rank + dir);
+        checkPawnSquare(board, file + 1, rank + dir);
 
-        if (startingPos == true && check == true)
+        bool check = checkPawnSquare(board, file, rank + dir);
+
+        if (colour == Colour.White && rank == 1 && check == true)
         {
-            checkPawnSquare(column, row + dir + dir);
+            checkPawnSquare(board, file, rank + dir + dir);
+        }
+        else if(colour == Colour.Black && rank == 6 && check == true)
+        {
+            checkPawnSquare(board, file, rank + dir + dir);
         }
 
         return possibleMoves;
     }
 
-    private bool checkPawnSquare(int c, int r)
+    private bool checkPawnSquare(Board board, int f, int r)
     {
-        if (board.getSquare(c, r) == null)
+        if (f < 0 || f > 7 || r < 0 || r > 7)
         {
             return false;
         }
-        if (board.getSquare(c, r).isEmpty() && c == column)
+        if (board.getPiece(f, r) == null && f == file)
         {
-            possibleMoves.Add(board.getSquare(c, r));
+            possibleMoves.Add(new Vector2Int(f,r));
             return true;
         }
-        if(c != column && board.getSquare(c, r).isEmpty() == false && board.getSquare(c, r).getPiece().getPlayer() != getPlayer() || (board.getSquare(c, r).enPassant == true && board.getSquare(c, r).enPassantPiece.getPlayer() != getPlayer()))
+        if (f != file && board.getPiece(f, r) != null && board.getPiece(f, r).colour != colour || (board.enPassant.Equals(new Vector2Int(f, r))))
         {
-            possibleMoves.Add(board.getSquare(c, r));
+            possibleMoves.Add(new Vector2Int(f, r));
         }
         return false;
     }

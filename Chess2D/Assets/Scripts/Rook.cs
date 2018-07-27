@@ -1,51 +1,48 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Profiling;
 
 public class Rook : Piece {
 
-    public Rook(Player player, Board board, int c, int r) : base(player, board, c, r)
+    public Rook(Colour colour) : base(colour)
     {
-        value = 5;
+
     }
 
-    public override List<Square> getPossibleMoves()
+    public override List<Vector2Int> generatePossibleMoves(Board board)
     {
-        Profiler.BeginSample("Rook Possible Moves");
-        possibleMoves = new List<Square>();
-        int column = board.getSquare(this).getColumn();
-        int row = board.getSquare(this).getRow();
+        possibleMoves = new List<Vector2Int>();
+        int file = board.getPosition(this).x;
+        int rank = board.getPosition(this).y;
 
-        for (int i = column - 1; i > 0; i--)
+        for (int i = file - 1; i >= 0; i--)
         {
-            if (checkSquare(i, row) == false)
+            if (checkSquare(board, i, rank) == false)
             {
                 break;
             }
         }
-        for (int i = column+1; i < 9; i++)
+        for (int i = file + 1; i <= 7; i++)
         {
-            if(checkSquare(i, row) == false)
+            if (checkSquare(board, i, rank) == false)
             {
                 break;
             }
         }
-        for (int i = row-1; i > 0; i--)
+        for (int i = rank - 1; i >= 0; i--)
         {
-            if (checkSquare(column, i) == false)
+            if (checkSquare(board, file, i) == false)
             {
                 break;
             }
         }
-        for (int i = row+1; i < 9; i++)
+        for (int i = rank + 1; i <= 7; i++)
         {
-            if (checkSquare(column, i) == false)
+            if (checkSquare(board, file, i) == false)
             {
                 break;
             }
         }
-        Profiler.EndSample();
         return possibleMoves;
     }
 }

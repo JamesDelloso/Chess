@@ -3,46 +3,46 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Bishop : Piece {
-
-    public Bishop(Player player, Board board, int c, int r) : base(player, board, c, r)
+    
+    public Bishop(Colour colour) : base(colour)
     {
-        value = 3;
+
     }
 
-    public override List<Square> getPossibleMoves()
+    public override List<Vector2Int> generatePossibleMoves(Board board)
     {
-        possibleMoves = new List<Square>();
-        int column = board.getSquare(this).getColumn();
-        int row = board.getSquare(this).getRow();
+        possibleMoves = new List<Vector2Int>();
+        int file = board.getPosition(this).x;
+        int rank = board.getPosition(this).y;
 
-        int r = row-1;
-        for (int c = column - 1; c > 0 && r > 0; c--, r--)
+        int r = rank - 1;
+        for (int f = file - 1; f >= 0 && r >= 0; f--, r--)
         {
-            if (checkSquare(c, r) == false)
+            if (checkSquare(board, f, r) == false)
             {
                 break;
             }
         }
-        r = row + 1;
-        for (int c = column + 1; c < 9 && r < 9; c++, r++)
+        r = rank + 1;
+        for (int f = file + 1; f <= 7 && r <= 7; f++, r++)
         {
-            if (checkSquare(c, r) == false)
+            if (checkSquare(board, f, r) == false)
             {
                 break;
             }
         }
-        r = row + 1;
-        for (int c = column - 1; c > 0 && r < 9; c--, r++)
+        r = rank + 1;
+        for (int f = file - 1; f >= 0 && r <= 7; f--, r++)
         {
-            if (checkSquare(c, r) == false)
+            if (checkSquare(board, f, r) == false)
             {
                 break;
             }
         }
-        r = row - 1;
-        for (int c = column + 1; c < 9 && r > 0; c++, r--)
+        r = rank - 1;
+        for (int f = file + 1; f <= 7 && r >= 0; f++, r--)
         {
-            if (checkSquare(c, r) == false)
+            if (checkSquare(board, f, r) == false)
             {
                 break;
             }
