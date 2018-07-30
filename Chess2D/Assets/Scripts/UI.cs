@@ -12,6 +12,7 @@ public class UI : MonoBehaviour {
     private Piece selectedPiece;
     private GameObject selectedGO;
     private bool promotingPawn = false;
+    private bool mouseDown = false;
 
     private GameObject[] prevSquares = new GameObject[0];
     private Material[] prevMaterials = new Material[0];
@@ -19,14 +20,16 @@ public class UI : MonoBehaviour {
     // Use this for initialization
     void Start()
     {
-        board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        using (StreamReader sr = new StreamReader("Assets/GameStatus.txt"))
+        {
+            //board = new Board(sr.ReadLine());
+            board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        }
         updatePieces();
-        //print(FEN.generate(board));
     }
 	
 	// Update is called once per frame
 	void Update () {
-    
         
     }
 
@@ -36,6 +39,11 @@ public class UI : MonoBehaviour {
         {
             int file = int.Parse(image.name.Substring(0, 1));
             int rank = int.Parse(image.name.Substring(2, 1));
+            bool samePiece = false;
+            if (board.getPosition(selectedPiece) == new Vector2Int(file, rank))
+            {
+                samePiece = true;
+            }
             for (int i = 0; i < prevSquares.Length; i++)
             {
                 prevSquares[i].GetComponent<Image>().material = prevMaterials[i];
@@ -63,7 +71,7 @@ public class UI : MonoBehaviour {
                 selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
                 selectedGO = null;
             }
-            if (board.getPiece(file, rank) != null && ((board.getPiece(file, rank).colour == Colour.White && board.whitesTurn) || (board.getPiece(file, rank).colour == Colour.Black && !board.whitesTurn)))
+            if (samePiece == false && board.getPiece(file, rank) != null && ((board.getPiece(file, rank).colour == Colour.White && board.whitesTurn) || (board.getPiece(file, rank).colour == Colour.Black && !board.whitesTurn)))
             {
                 List<Vector2Int> possibleMoves = board.getPiece(file, rank).generatePossibleMoves(board);
                 prevMaterials = new Material[possibleMoves.Count + 1];
@@ -152,6 +160,10 @@ public class UI : MonoBehaviour {
                     go.transform.position = GameObject.Find(i.ToString() + "," + j.ToString()).transform.position;
                 }
             }
+        }
+        using (StreamWriter sw = new StreamWriter("Assets/GameStatus.txt", false))
+        {
+            sw.WriteLine(FEN.generate(board));
         }
         updateMoves();
     }
