@@ -201,4 +201,12 @@ public class UI : MonoBehaviour {
         fenInput.text = "";
         updatePieces();
     }
+
+    public void copyFEN()
+    {
+        TextEditor te = new TextEditor();
+        te.text = FEN.generate(board);
+        te.SelectAll();
+        te.Copy();
+    }
 }

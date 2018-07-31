@@ -25,19 +25,19 @@ public class King : Piece {
         checkSquare(board, file, rank - 1);
         checkSquare(board, file + 1, rank - 1);
 
-        if (colour == Colour.White && board.wqCastle == true && board.squares[1,0] == null && board.squares[2, 0] == null && board.squares[3, 0] == null)
+        if (colour == Colour.White && board.wqCastle == true && board.squares[1,0] == null && board.squares[2, 0] == null && board.squares[3, 0] == null && board.squares[0,0] != null && board.squares[0,0].ToString() == "White Rook")
         {
             possibleMoves.Add(new Vector2Int(2, 0));
         }
-        if (colour == Colour.White && board.wkCastle == true && board.squares[5, 0] == null && board.squares[6, 0] == null)
+        if (colour == Colour.White && board.wkCastle == true && board.squares[5, 0] == null && board.squares[6, 0] == null && board.squares[7, 0] != null && board.squares[7, 0].ToString() == "White Rook")
         {
             possibleMoves.Add(new Vector2Int(6, 0));
         }
-        else if (colour == Colour.Black && board.bqCastle == true && board.squares[1, 7] == null && board.squares[2, 7] == null && board.squares[3, 7] == null)
+        else if (colour == Colour.Black && board.bqCastle == true && board.squares[1, 7] == null && board.squares[2, 7] == null && board.squares[3, 7] == null && board.squares[0, 7] != null && board.squares[0, 7].ToString() == "Black Rook")
         {
             possibleMoves.Add(new Vector2Int(2, 7));
         }
-        if (colour == Colour.Black && board.bkCastle == true && board.squares[5, 7] == null && board.squares[6, 7] == null)
+        if (colour == Colour.Black && board.bkCastle == true && board.squares[5, 7] == null && board.squares[6, 7] == null && board.squares[7, 7] != null && board.squares[7, 7].ToString() == "Black Rook")
         {
             possibleMoves.Add(new Vector2Int(6, 7));
         }

@@ -67,7 +67,7 @@ public class Board {
             }
             halfMove = 0;
         }
-        else if(piece.GetType().Equals(typeof(King)) && piece.colour == Colour.White)
+        else if(piece.ToString() == "White King")
         {
             if(fromX == 4 && fromY == 0 && toX == 6 && toY == 0)
             {
@@ -82,7 +82,7 @@ public class Board {
             wkCastle = false;
             wqCastle = false;
         }
-        else if (piece.GetType().Equals(typeof(King)) && piece.colour == Colour.Black)
+        else if (piece.ToString() == "Black King")
         {
             if (fromX == 4 && fromY == 7 && toX == 6 && toY == 7)
             {
@@ -97,19 +97,19 @@ public class Board {
             bkCastle = false;
             bqCastle = false;
         }
-        else if (piece.GetType().Equals((typeof(Rook))) && piece.colour == Colour.White && fromX == 0 && fromY == 0)
+        else if (piece.ToString() == "White Rook" && fromX == 0 && fromY == 0)
         {
             wqCastle = false;
         }
-        else if (piece.GetType().Equals((typeof(Rook))) && piece.colour == Colour.White && fromX == 7 && fromY == 0)
+        else if (piece.ToString() == "White Rook" && fromX == 7 && fromY == 0)
         {
             wkCastle = false;
         }
-        else if (piece.GetType().Equals((typeof(Rook))) && piece.colour == Colour.Black && fromX == 0 && fromY == 7)
+        else if (piece.ToString() == "Black Rook" && fromX == 0 && fromY == 7)
         {
             bqCastle = false;
         }
-        else if (piece.GetType().Equals((typeof(Rook))) && piece.colour == Colour.Black && fromX == 7 && fromY == 7)
+        else if (piece.ToString() == "Black Rook" && fromX == 7 && fromY == 7)
         {
             bkCastle = false;
         }
@@ -123,19 +123,7 @@ public class Board {
         whitesTurn = !whitesTurn;
         fullMove += 0.5f;
         Debug.Log(FEN.generate(this));
-        //wKing.isCheck(this);
-        updatePieces();
-    }
-
-    public void updatePieces()
-    {
-        foreach (Piece p in squares)
-        {
-            if(p != null)
-            {
-                p.generatePossibleMoves(this);
-            }
-        }
+        wKing.isCheck(this);
     }
 
     public Piece getPiece(int file, int rank)
