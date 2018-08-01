@@ -36,7 +36,7 @@ public class Pawn : Piece {
         {
             checkPawnSquare(board, file, rank + dir + dir);
         }
-
+        removePossibleChecks(board);
         return possibleMoves;
     }
 
