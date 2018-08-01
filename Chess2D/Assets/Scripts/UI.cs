@@ -23,7 +23,8 @@ public class UI : MonoBehaviour {
         using (StreamReader sr = new StreamReader("Assets/GameStatus.txt"))
         {
             //board = new Board(sr.ReadLine());
-            board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            //board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            board = new Board("rnbqkbnr/pppp1ppp/8/4p3/3PP3/8/PPP2PPP/RNBQKBNR b KQkq e3 0 2");
         }
         updatePieces();
     }
