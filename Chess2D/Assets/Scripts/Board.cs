@@ -41,13 +41,6 @@ public class Board {
 
         wKing = (King)squares[4, 0];
         bKing = (King)squares[4, 7];
-        foreach (Piece p in squares)
-        {
-            if (p != null)
-            {
-                p.generatePossibleMoves(this);
-            }
-        }
     }
 
     public void movePiece(int fromX, int fromY, int toX, int toY)
@@ -130,12 +123,7 @@ public class Board {
         whitesTurn = !whitesTurn;
         fullMove += 0.5f;
         Debug.Log(FEN.generate(this));
-        foreach(Piece p in squares)
-        {
-            if(p != null) {
-                p.generatePossibleMoves(this);
-            }
-        }
+        wKing.isCheck(this);
     }
 
     public Piece getPiece(int file, int rank)

@@ -43,7 +43,6 @@ public class Rook : Piece {
                 break;
             }
         }
-        removePossibleChecks(board);
         return possibleMoves;
     }
 }

@@ -75,7 +75,6 @@ public class Queen : Piece {
                 break;
             }
         }
-        removePossibleChecks(board);
         return possibleMoves;
     }
 }

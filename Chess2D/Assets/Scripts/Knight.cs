@@ -24,7 +24,6 @@ public class Knight : Piece {
         checkSquare(board, file + 2, rank + 1);
         checkSquare(board, file + 1, rank + 2);
 
-        removePossibleChecks(board);
         return possibleMoves;
     }
 }

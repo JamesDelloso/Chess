@@ -47,7 +47,6 @@ public class Bishop : Piece {
                 break;
             }
         }
-        removePossibleChecks(board);
         return possibleMoves;
     }
 }
