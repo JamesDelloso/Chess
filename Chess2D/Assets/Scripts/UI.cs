@@ -23,8 +23,9 @@ public class UI : MonoBehaviour {
         using (StreamReader sr = new StreamReader("Assets/GameStatus.txt"))
         {
             //board = new Board(sr.ReadLine());
-            //board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-            board = new Board("rnbqkbnr/pppp1ppp/8/4p3/3PP3/8/PPP2PPP/RNBQKBNR b KQkq e3 0 2");
+            board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            //board = new Board("rnbqkbnr/pppp1ppp/8/4p3/3PP3/8/PPP2PPP/RNBQKBNR b KQkq e3 0 2");
+            //board = new Board("rnbqkbnr/pppp1ppp/8/4pQ2/2BPP3/8/PPP2PPP/RNB1K1NR w KQkq - 7 5");
         }
         updatePieces();
     }
@@ -167,6 +168,7 @@ public class UI : MonoBehaviour {
             sw.WriteLine(FEN.generate(board));
         }
         updateMoves();
+        seeIfCheckOrStaleMate();
     }
 
     public void updateMoves()
@@ -189,6 +191,30 @@ public class UI : MonoBehaviour {
         GameObject.Find("Black Moves").GetComponent<Text>().text = blackMoves;
     }
 
+    public void seeIfCheckOrStaleMate()
+    {
+        if (board.isCheckMate(board.wKing) == true)
+        {
+            GameObject.Find("Game End").GetComponent<Canvas>().enabled = true;
+            GameObject.Find("Game End").transform.GetChild(0).GetComponent<Text>().text = "Checkmate!\n\nBlack Wins";
+        }
+        else if (board.isCheckMate(board.bKing) == true)
+        {
+            GameObject.Find("Game End").GetComponent<Canvas>().enabled = true;
+            GameObject.Find("Game End").transform.GetChild(0).GetComponent<Text>().text = "Checkmate!\n\nWhite Wins";
+        }
+        else if (board.isStaleMate(board.wKing) == true)
+        {
+            GameObject.Find("Game End").GetComponent<Canvas>().enabled = true;
+            GameObject.Find("Game End").transform.GetChild(0).GetComponent<Text>().text = "Stalemate!\n\nDraw";
+        }
+        else if (board.isStaleMate(board.bKing) == true)
+        {
+            GameObject.Find("Game End").GetComponent<Canvas>().enabled = true;
+            GameObject.Find("Game End").transform.GetChild(0).GetComponent<Text>().text = "Stalemate!\n\nDraw";
+        }
+    }
+
     public void fenEntered(InputField fenInput)
     {
         print(fenInput.text);
@@ -209,5 +235,12 @@ public class UI : MonoBehaviour {
         te.text = FEN.generate(board);
         te.SelectAll();
         te.Copy();
+    }
+
+    public void newGame()
+    {
+        GameObject.Find("Game End").GetComponent<Canvas>().enabled = false;
+        board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        updatePieces();
     }
 }

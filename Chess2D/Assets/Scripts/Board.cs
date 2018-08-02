@@ -39,8 +39,20 @@ public class Board {
         halfMove = int.Parse(fen.Split(' ')[4]);
         fullMove = int.Parse(fen.Split(' ')[5]);
 
-        wKing = (King)squares[4, 0];
-        bKing = (King)squares[4, 7];
+        foreach (Piece p in squares)
+        {
+            if (p != null)
+            {
+                if(p.ToString() == "White King")
+                {
+                    wKing = (King)p;
+                }
+                else if(p.ToString() == "Black King")
+                {
+                    bKing = (King)p;
+                }
+            }
+        }
         foreach (Piece p in squares)
         {
             if (p != null)
@@ -136,6 +148,38 @@ public class Board {
                 p.generatePossibleMoves(this);
             }
         }
+    }
+
+    public bool isCheckMate(King king)
+    {
+        if(king.isCheck(this) == false)
+        {
+            return false;
+        }
+        foreach (Piece p in squares)
+        {
+            if (p != null && p.colour == king.colour && p.possibleMoves.Count > 0)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public bool isStaleMate(King king)
+    {
+        foreach (Piece p in squares)
+        {
+            if (p != null && p.colour == king.colour && p.possibleMoves.Count > 0)
+            {
+                return false;
+            }
+        }
+        if (king.isCheck(this) == true)
+        {
+            return false;
+        }
+        return true;
     }
 
     public Piece getPiece(int file, int rank)

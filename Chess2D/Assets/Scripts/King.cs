@@ -142,6 +142,8 @@ public class King : Piece {
                 break;
             }
         }
+
+
         int dir = 1;
         if (colour == Colour.Black)
         {
@@ -155,6 +157,21 @@ public class King : Piece {
         {
             return true;
         }
+
+        for(int i=-1;i<2;i++)
+        {
+            for(int j=-1;j<2;j++)
+            {
+                if(checkForPiece(board, file + i, rank + j) == true)
+                {
+                    if(board.getPiece(file + i, rank + j).colour != colour && board.getPiece(file + i, rank + j).GetType() == typeof(King))
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
         if (checkForPiece(board, file - 2, rank - 1) == true)
         {
             if (board.getPiece(file - 2, rank - 1).colour != colour && board.getPiece(file - 2, rank - 1).GetType() == typeof(Knight))
