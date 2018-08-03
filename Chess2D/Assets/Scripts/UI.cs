@@ -17,6 +17,9 @@ public class UI : MonoBehaviour {
     private GameObject[] prevSquares = new GameObject[0];
     private Material[] prevMaterials = new Material[0];
 
+    private ArrayList whitePiecesTaken = new ArrayList();
+    private ArrayList blackPiecesTaken = new ArrayList();
+
     // Use this for initialization
     void Start()
     {
@@ -53,6 +56,11 @@ public class UI : MonoBehaviour {
             if (selectedPiece != null && selectedPiece.generatePossibleMoves(board).Contains(new Vector2Int(file, rank)))
             {
                 board.movePiece(board.getPosition(selectedPiece).x, board.getPosition(selectedPiece).y, file, rank);
+                try
+                {
+                    pieceTaken(GameObject.Find(file.ToString() + "," + rank.ToString()).transform.GetChild(0).gameObject);
+                }
+                catch { }
                 if (selectedPiece.GetType().Equals(typeof(Pawn)) && rank == 7)
                 {
                     GameObject.Find("Promotion").GetComponent<Canvas>().enabled = true;
@@ -117,6 +125,7 @@ public class UI : MonoBehaviour {
 
     public void selectPromotion(Image image)
     {
+
         GameObject.Find("Promotion").GetComponent<Canvas>().enabled = false;
         Vector2Int square = board.getPosition(selectedPiece);
         Destroy(GameObject.Find(square.x.ToString() + "," + square.y.ToString()).transform.GetChild(0).gameObject);
@@ -212,6 +221,40 @@ public class UI : MonoBehaviour {
         {
             GameObject.Find("Game End").GetComponent<Canvas>().enabled = true;
             GameObject.Find("Game End").transform.GetChild(0).GetComponent<Text>().text = "Stalemate!\n\nDraw";
+        }
+    }
+
+    public void pieceTaken(GameObject go)
+    {
+        if(selectedPiece.colour == Colour.Black)
+        {
+            if(!whitePiecesTaken.Contains(go.name))
+            {
+                whitePiecesTaken.Add(go.name);
+                go.transform.parent = GameObject.Find("White Taken Pieces").transform.GetChild(whitePiecesTaken.Count - 1);
+                go.transform.position = GameObject.Find("White Taken Pieces").transform.GetChild(whitePiecesTaken.Count - 1).transform.position;
+            }
+            else
+            {
+                go.transform.parent = GameObject.Find("White Taken Pieces").transform.GetChild(whitePiecesTaken.IndexOf(go.name));
+                go.transform.position = GameObject.Find("White Taken Pieces").transform.GetChild(whitePiecesTaken.IndexOf(go.name)).transform.position;
+                go.transform.parent.GetComponent<TextMesh>().text = "x" + GameObject.Find("White Taken Pieces").transform.GetChild(whitePiecesTaken.IndexOf(go.name)).childCount.ToString();
+            }
+        }
+        else
+        {
+            if (!blackPiecesTaken.Contains(go.name))
+            {
+                blackPiecesTaken.Add(go.name);
+                go.transform.parent = GameObject.Find("Black Taken Pieces").transform.GetChild(blackPiecesTaken.Count - 1);
+                go.transform.position = GameObject.Find("Black Taken Pieces").transform.GetChild(blackPiecesTaken.Count - 1).transform.position;
+            }
+            else
+            {
+                go.transform.parent = GameObject.Find("Black Taken Pieces").transform.GetChild(blackPiecesTaken.IndexOf(go.name));
+                go.transform.position = GameObject.Find("Black Taken Pieces").transform.GetChild(blackPiecesTaken.IndexOf(go.name)).transform.position;
+                go.transform.parent.GetComponent<TextMesh>().text = "x" + GameObject.Find("Black Taken Pieces").transform.GetChild(blackPiecesTaken.IndexOf(go.name)).childCount.ToString();
+            }
         }
     }
 
