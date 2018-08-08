@@ -20,6 +20,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4441882648248800}
   - component: {fileID: 212994482116716858}
+  - component: {fileID: 114703928589571450}
+  - component: {fileID: 114622634358897384}
   m_Layer: 0
   m_Name: WhiteKnight
   m_TagString: Untagged
@@ -40,6 +42,59 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &114622634358897384
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1276914973560862}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1768714887, guid: dc443db3e92b4983b9738c1131f555cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_TransformSyncMode: 1
+  m_SendInterval: 0.1
+  m_SyncRotationAxis: 7
+  m_RotationSyncCompression: 0
+  m_SyncSpin: 0
+  m_MovementTheshold: 0.001
+  m_VelocityThreshold: 0.0001
+  m_SnapThreshold: 5
+  m_InterpolateRotation: 1
+  m_InterpolateMovement: 1
+--- !u!114 &114703928589571450
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1276914973560862}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 372142912, guid: dc443db3e92b4983b9738c1131f555cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SceneId:
+    m_Value: 0
+  m_AssetId:
+    i0: 229
+    i1: 105
+    i2: 49
+    i3: 161
+    i4: 77
+    i5: 221
+    i6: 62
+    i7: 196
+    i8: 9
+    i9: 170
+    i10: 168
+    i11: 75
+    i12: 59
+    i13: 64
+    i14: 183
+    i15: 87
+  m_ServerOnly: 0
+  m_LocalPlayerAuthority: 1
 --- !u!212 &212994482116716858
 SpriteRenderer:
   m_ObjectHideFlags: 1
@@ -53,6 +108,7 @@ SpriteRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 4294967295
   m_Materials:
   - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
   m_StaticBatchInfo:

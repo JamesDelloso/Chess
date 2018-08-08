@@ -5,14 +5,16 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.UI;
+using UnityEngine.Networking;
+using UnityEngine.EventSystems;
 
-public class UI : MonoBehaviour {
+public class UI : NetworkBehaviour {
 
-    private Board board;
-    private Piece selectedPiece;
-    private GameObject selectedGO;
-    private bool promotingPawn = false;
-    private bool mouseDown = false;
+    public static Board board;
+    public static Piece selectedPiece;
+    public static GameObject selectedGO;
+    public static bool promotingPawn = false;
+    public static Vector2Int promotingPos;
 
     private GameObject[] prevSquares = new GameObject[0];
     private Material[] prevMaterials = new Material[0];
@@ -20,19 +22,22 @@ public class UI : MonoBehaviour {
     private ArrayList whitePiecesTaken = new ArrayList();
     private ArrayList blackPiecesTaken = new ArrayList();
 
+    public static Player player;
+
     // Use this for initialization
     void Start()
     {
         using (StreamReader sr = new StreamReader("Assets/GameStatus.txt"))
         {
             //board = new Board(sr.ReadLine());
-            board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            //board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
             //board = new Board("rnbqkbnr/pppp1ppp/8/4p3/3PP3/8/PPP2PPP/RNBQKBNR b KQkq e3 0 2");
             //board = new Board("rnbqkbnr/pppp1ppp/8/4pQ2/2BPP3/8/PPP2PPP/RNB1K1NR w KQkq - 7 5");
         }
-        updatePieces();
+        board = Game.board;
+        //updatePieces();
     }
-	
+
 	// Update is called once per frame
 	void Update () {
         
@@ -55,24 +60,59 @@ public class UI : MonoBehaviour {
             }
             if (selectedPiece != null && selectedPiece.generatePossibleMoves(board).Contains(new Vector2Int(file, rank)))
             {
-                board.movePiece(board.getPosition(selectedPiece).x, board.getPosition(selectedPiece).y, file, rank);
-                try
-                {
-                    pieceTaken(GameObject.Find(file.ToString() + "," + rank.ToString()).transform.GetChild(0).gameObject);
-                }
-                catch { }
+                int x = board.getPosition(selectedPiece).x;
+                int y = board.getPosition(selectedPiece).y;
                 if (selectedPiece.GetType().Equals(typeof(Pawn)) && rank == 7)
                 {
-                    GameObject.Find("Promotion").GetComponent<Canvas>().enabled = true;
+                    GameObject.Find("White Promotion").GetComponent<Canvas>().enabled = true;
                     promotingPawn = true;
+                    promotingPos = new Vector2Int(file, rank);
+                    //try
+                    //{
+                    //    Destroy(GameObject.Find(file.ToString() + "," + rank.ToString()).transform.GetChild(0).gameObject);
+                    //}
+                    //catch { }
+                    //selectedGO.transform.SetParent(GameObject.Find(file.ToString() + "," + rank.ToString()).transform);
+                    //selectedGO.transform.position = GameObject.Find(file.ToString() + "," + rank.ToString()).transform.position;
+                }
+                else if (selectedPiece.GetType().Equals(typeof(Pawn)) && rank == 0)
+                {
+                    GameObject.Find("Black Promotion").GetComponent<Canvas>().enabled = true;
+                    promotingPawn = true;
+                    promotingPos = new Vector2Int(file, rank);
+                    //try
+                    //{
+                    //    Destroy(GameObject.Find(file.ToString() + "," + rank.ToString()).transform.GetChild(0).gameObject);
+                    //}
+                    //catch { }
+                    //selectedGO.transform.SetParent(GameObject.Find(file.ToString() + "," + rank.ToString()).transform);
+                    //selectedGO.transform.position = GameObject.Find(file.ToString() + "," + rank.ToString()).transform.position;
                 }
                 else
                 {
+                    player.CmdMove(x, y, file, rank);
                     selectedPiece = null;
                     selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
                     selectedGO = null;
                 }
-                updatePieces();
+                //else
+                //{
+                //    selectedPiece = null;
+                //    selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
+                //    selectedGO = null;
+                //}
+                //if (promotingPawn == false)
+                //{
+                //    player.CmdMove(x, y, file, rank);
+                //    selectedPiece = null;
+                //    selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
+                //    selectedGO = null;
+                //}
+                //try
+                //{
+                //    pieceTaken(GameObject.Find(file.ToString() + "," + rank.ToString()).transform.GetChild(0).gameObject);
+                //}
+                //catch { }
             }
             else if (selectedPiece != null && !selectedPiece.generatePossibleMoves(board).Contains(new Vector2Int(file, rank)))
             {
@@ -81,7 +121,7 @@ public class UI : MonoBehaviour {
                 selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
                 selectedGO = null;
             }
-            if (samePiece == false && board.getPiece(file, rank) != null && ((board.getPiece(file, rank).colour == Colour.White && board.whitesTurn) || (board.getPiece(file, rank).colour == Colour.Black && !board.whitesTurn)))
+            if (samePiece == false && board.getPiece(file, rank) != null && ((board.getPiece(file, rank).colour == Colour.White && board.whitesTurn && name == "White Board") || (board.getPiece(file, rank).colour == Colour.Black && !board.whitesTurn && name == "Black Board")))
             {
                 List<Vector2Int> possibleMoves = board.getPiece(file, rank).generatePossibleMoves(board);
                 prevMaterials = new Material[possibleMoves.Count + 1];
@@ -126,63 +166,23 @@ public class UI : MonoBehaviour {
     public void selectPromotion(Image image)
     {
 
-        GameObject.Find("Promotion").GetComponent<Canvas>().enabled = false;
+        GameObject.Find("White Promotion").GetComponent<Canvas>().enabled = false;
+        GameObject.Find("Black Promotion").GetComponent<Canvas>().enabled = false;
         Vector2Int square = board.getPosition(selectedPiece);
-        Destroy(GameObject.Find(square.x.ToString() + "," + square.y.ToString()).transform.GetChild(0).gameObject);
-        if (image.name == "Queen")
+        string colour = "White";
+        if(selectedPiece.colour == Colour.Black)
         {
-            board.squares[square.x, square.y] = new Queen(selectedPiece.colour);
+            colour = "Black";
         }
-        else if (image.name == "Rook")
-        {
-            board.squares[square.x, square.y] = new Rook(selectedPiece.colour);
-        }
-        else if (image.name == "Bishop")
-        {
-            board.squares[square.x, square.y] = new Bishop(selectedPiece.colour);
-        }
-        else if (image.name == "Knight")
-        {
-            board.squares[square.x, square.y] = new Knight(selectedPiece.colour);
-        }
-        selectedGO = (GameObject)Instantiate(Resources.Load(board.getPiece(square.x, square.y).ToString().Replace(" ", string.Empty)));
-        selectedGO.name = board.getPiece(square.x, square.y).ToString();
-        selectedGO.transform.parent = GameObject.Find(square.x.ToString() + "," + square.y.ToString()).transform;
-        selectedGO.transform.position = GameObject.Find(square.x.ToString() + "," + square.y.ToString()).transform.position;
+        player.CmdpromotePawn(image.name, colour, square.x, square.y, promotingPos.x, promotingPos.y);
+        selectedPiece = null;
+        selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
+        selectedGO = null;
         promotingPawn = false;
-        //selectedPiece = null;
-    }
-
-    public void updatePieces()
-    {
-        for (int i = 0; i < 8; i++)
-        {
-            for (int j = 0; j < 8; j++)
-            {
-                if (GameObject.Find(i.ToString() + "," + j.ToString()).transform.childCount != 0)
-                {
-                    Destroy(GameObject.Find(i.ToString() + "," + j.ToString()).transform.GetChild(0).gameObject);
-                }
-                if (board.squares[i,j] != null)
-                {
-                    GameObject go = (GameObject)Instantiate(Resources.Load(board.squares[i, j].ToString().Replace(" ", string.Empty)));
-                    go.name = board.squares[i, j].ToString();
-                    go.transform.parent = GameObject.Find(i.ToString() + "," + j.ToString()).transform;
-                    go.transform.position = GameObject.Find(i.ToString() + "," + j.ToString()).transform.position;
-                }
-            }
-        }
-        using (StreamWriter sw = new StreamWriter("Assets/GameStatus.txt", false))
-        {
-            sw.WriteLine(FEN.generate(board));
-        }
-        updateMoves();
-        seeIfCheckOrStaleMate();
     }
 
     public void updateMoves()
     {
-        //GameObject.Find("Moves").GetComponent<Text>().text += board.moves[board.moves.Count-1];
         string whiteMoves = "";
         string blackMoves = "";
         for (int i = 0; i < board.moves.Count; i++)
@@ -269,7 +269,6 @@ public class UI : MonoBehaviour {
         {
         }
         fenInput.text = "";
-        updatePieces();
     }
 
     public void copyFEN()
@@ -284,6 +283,5 @@ public class UI : MonoBehaviour {
     {
         GameObject.Find("Game End").GetComponent<Canvas>().enabled = false;
         board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        updatePieces();
     }
 }
