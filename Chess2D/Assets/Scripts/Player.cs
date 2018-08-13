@@ -12,10 +12,9 @@ public class Player : NetworkBehaviour {
         //Game.board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         if (Game.player1 == null)
         {
-            UI.board = Game.board;
             Game.player1 = this;
             name = "Player 1";
-            if(isLocalPlayer)
+            if(isLocalPlayer || Game.mode == Game.Mode.SinglePlayer)
             {
                 GameObject.Find("Board").name = "White Board";
                 loadPieces();
@@ -41,6 +40,10 @@ public class Player : NetworkBehaviour {
         {
             for (int j = 0; j < 8; j++)
             {
+                if (GameObject.Find(i.ToString() + "," + j.ToString()).transform.childCount > 0)
+                {
+                    Destroy(GameObject.Find(i.ToString() + "," + j.ToString()).transform.GetChild(0).gameObject);
+                }
                 if (Game.board.squares[i, j] != null)
                 {
                     GameObject go = (GameObject)Instantiate(Resources.Load(Game.board.squares[i, j].ToString().Replace(" ", string.Empty)));
@@ -54,19 +57,19 @@ public class Player : NetworkBehaviour {
 
     public void move(int a, int b, int c, int d)
     {
-        Piece rookToCastle = UI.board.isCastling(a, b, c, d);
+        Piece rookToCastle = Game.board.isCastling(a, b, c, d);
         if (rookToCastle != null)
         {
-            string pos = UI.board.getPosition(rookToCastle).x.ToString() + "," + UI.board.getPosition(rookToCastle).y.ToString();
+            string pos = Game.board.getPosition(rookToCastle).x.ToString() + "," + Game.board.getPosition(rookToCastle).y.ToString();
             GameObject rook = GameObject.Find(pos).transform.GetChild(0).gameObject;
-            pos = ((a + c) / 2).ToString() + "," + UI.board.getPosition(rookToCastle).y.ToString();
+            pos = ((a + c) / 2).ToString() + "," + Game.board.getPosition(rookToCastle).y.ToString();
             GameObject square = GameObject.Find(pos).gameObject;
             rook.transform.SetParent(square.transform);
             rook.transform.position = square.transform.position;
         }
-        else if(UI.board.enPassant == new Vector2Int(c, d))
+        else if(Game.board.enPassant == new Vector2Int(c, d))
         {
-            if(UI.board.squares[a, b].colour == Colour.White)
+            if(Game.board.squares[a, b].colour == Colour.White)
             {
                 pieceTaken(GameObject.Find(c.ToString() + "," + (d - 1).ToString()).transform.GetChild(0).gameObject);
             }
@@ -77,9 +80,7 @@ public class Player : NetworkBehaviour {
         }
         try
         {
-            GameObject to = GameObject.Find(c.ToString() + "," + d.ToString()).transform.GetChild(0).gameObject;
-            //Destroy(to);
-            pieceTaken(to);
+            pieceTaken(GameObject.Find(c.ToString() + "," + d.ToString()).transform.GetChild(0).gameObject);
         }
         catch { }
         GameObject piece = GameObject.Find(a.ToString() + "," + b.ToString()).transform.GetChild(0).gameObject;
@@ -122,16 +123,18 @@ public class Player : NetworkBehaviour {
         {
             move(a, b,c, d);
         }
-
-        if (Game.currentPlayer == Game.player1)
+        if(Game.mode == Game.Mode.Multiplayer)
         {
-            Game.currentPlayer = Game.player2;
+            if (Game.currentPlayer == Game.player1)
+            {
+                Game.currentPlayer = Game.player2;
+            }
+            else
+            {
+                Game.currentPlayer = Game.player1;
+            }
         }
-        else
-        {
-            Game.currentPlayer = Game.player1;
-        }
-        UI.board.movePiece(a, b, c, d);
+        Game.board.movePiece(a, b, c, d);
         seeIfCheckOrStaleMate();
     }
 
@@ -148,41 +151,41 @@ public class Player : NetworkBehaviour {
         {
             if(piece == "Queen")
             {
-                UI.board.squares[a, b] = new Queen(Colour.White);
+                Game.board.squares[a, b] = new Queen(Colour.White);
             }
             else if(piece == "Rook")
             {
-                UI.board.squares[a, b] = new Rook(Colour.White);
+                Game.board.squares[a, b] = new Rook(Colour.White);
             }
             else if (piece == "Bishop")
             {
-                UI.board.squares[a, b] = new Bishop(Colour.White);
+                Game.board.squares[a, b] = new Bishop(Colour.White);
             }
             else if (piece == "Knight")
             {
-                UI.board.squares[a, b] = new Knight(Colour.White);
+                Game.board.squares[a, b] = new Knight(Colour.White);
             }
         }
         else if (colour == "Black")
         {
             if (piece == "Queen")
             {
-                UI.board.squares[a, b] = new Queen(Colour.Black);
+                Game.board.squares[a, b] = new Queen(Colour.Black);
             }
             else if (piece == "Rook")
             {
-                UI.board.squares[a, b] = new Rook(Colour.Black);
+                Game.board.squares[a, b] = new Rook(Colour.Black);
             }
             else if (piece == "Bishop")
             {
-                UI.board.squares[a, b] = new Bishop(Colour.Black);
+                Game.board.squares[a, b] = new Bishop(Colour.Black);
             }
             else if (piece == "Knight")
             {
-                UI.board.squares[a, b] = new Knight(Colour.Black);
+                Game.board.squares[a, b] = new Knight(Colour.Black);
             }
         }
-        UI.board.movePiece(a, b, c, d);
+        Game.board.movePiece(a, b, c, d);
         try
         {
             GameObject to = GameObject.Find(c.ToString() + "," + d.ToString()).transform.GetChild(0).gameObject;
@@ -193,7 +196,7 @@ public class Player : NetworkBehaviour {
         {
             Destroy(GameObject.Find(a.ToString() + "," + b.ToString()).transform.GetChild(0).gameObject);
         }
-        GameObject go = (GameObject)Instantiate(Resources.Load(UI.board.squares[c, d].ToString().Replace(" ", string.Empty)));
+        GameObject go = (GameObject)Instantiate(Resources.Load(Game.board.squares[c, d].ToString().Replace(" ", string.Empty)));
         GameObject parent = GameObject.Find(c.ToString() + "," + d.ToString()).gameObject;
         go.transform.SetParent(parent.transform);
         go.transform.position = parent.transform.position;

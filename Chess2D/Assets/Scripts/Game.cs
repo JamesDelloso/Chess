@@ -13,13 +13,26 @@ public class Game : MonoBehaviour {
     public static ArrayList whitePiecesTaken = new ArrayList();
     public static ArrayList blackPiecesTaken = new ArrayList();
 
+    public enum Mode { SinglePlayer, Multiplayer};
+    public static Mode mode;
+
     // Use this for initialization
     void Awake() {
         board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    public void Start()
+    {
+        if(mode == Mode.SinglePlayer)
+        {
+            GameObject player = new GameObject();
+            player.AddComponent<Player>();
+            player.GetComponent<NetworkIdentity>().localPlayerAuthority = true;
+        }
+    }
+
+    // Update is called once per frame
+    void Update () {
 		
 	}
 }

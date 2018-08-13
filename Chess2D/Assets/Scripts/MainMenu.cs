@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Networking;
 
-public class MainMenu : MonoBehaviour {
+public class MainMenu : NetworkBehaviour {
 
 	// Use this for initialization
 	void Start () {
@@ -22,11 +23,13 @@ public class MainMenu : MonoBehaviour {
         {
             sw.WriteLine("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         }
+        Game.mode = Game.Mode.SinglePlayer;
         SceneManager.LoadSceneAsync("SinglePlayer");
     }
 
     public void multiplayer()
     {
+        Game.mode = Game.Mode.Multiplayer;
         SceneManager.LoadSceneAsync("Multiplayer");
     }
 }
