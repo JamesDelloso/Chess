@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class PGN {
 
-    public static string convert(Board board, Piece piece, int fromX, int toX, int toY)
+    public static string convertToString(Board board, Piece piece, int fromX, int toX, int toY)
     {
         string pgn = "";
         bool castled = false;
@@ -54,5 +54,10 @@ public static class PGN {
             pgn += FEN.convertPosToString(new Vector2Int(toX, toY));
         }
         return pgn;
+    }
+
+    public static Vector2Int convertToVector(string pos)
+    {
+        return Vector2Int.zero;
     }
 }

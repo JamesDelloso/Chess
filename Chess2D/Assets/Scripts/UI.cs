@@ -18,11 +18,10 @@ public class UI : NetworkBehaviour {
 
     private GameObject[] prevSquares = new GameObject[0];
     private Material[] prevMaterials = new Material[0];
+    private Material prevMaterial;
 
-    private ArrayList whitePiecesTaken = new ArrayList();
-    private ArrayList blackPiecesTaken = new ArrayList();
-
-    public static Player player;
+    public static GameObject prevSquare1;
+    public static GameObject prevSquare2;
 
     // Use this for initialization
     void Start()
@@ -34,7 +33,7 @@ public class UI : NetworkBehaviour {
             //board = new Board("rnbqkbnr/pppp1ppp/8/4p3/3PP3/8/PPP2PPP/RNBQKBNR b KQkq e3 0 2");
             //board = new Board("rnbqkbnr/pppp1ppp/8/4pQ2/2BPP3/8/PPP2PPP/RNB1K1NR w KQkq - 7 5");
         }
-        board = Game.board;
+        //board = Game.board;
         //updatePieces();
     }
 
@@ -45,74 +44,55 @@ public class UI : NetworkBehaviour {
 
     public void squareSelected(Image image)
     {
-        if(promotingPawn == false)
+        if(promotingPawn == false && Game.player2 != null)
         {
             int file = int.Parse(image.name.Substring(0, 1));
             int rank = int.Parse(image.name.Substring(2, 1));
             bool samePiece = false;
             if (board.getPosition(selectedPiece) == new Vector2Int(file, rank))
             {
-                samePiece = true;
+                //samePiece = true;
             }
             for (int i = 0; i < prevSquares.Length; i++)
             {
-                prevSquares[i].GetComponent<Image>().material = prevMaterials[i];
+                Destroy(prevSquares[i]);
+            }
+            if(prevMaterial != null && selectedGO != null)
+            {
+                selectedGO.transform.parent.GetComponent<Image>().material = prevMaterial;
             }
             if (selectedPiece != null && selectedPiece.generatePossibleMoves(board).Contains(new Vector2Int(file, rank)))
             {
                 int x = board.getPosition(selectedPiece).x;
                 int y = board.getPosition(selectedPiece).y;
-                if (selectedPiece.GetType().Equals(typeof(Pawn)) && rank == 7)
+                if (selectedPiece.GetType().Equals(typeof(Pawn)) && rank == 7 || selectedPiece.GetType().Equals(typeof(Pawn)) && rank == 0)
                 {
-                    GameObject.Find("White Promotion").GetComponent<Canvas>().enabled = true;
+                    if(rank == 7)
+                    {
+                        GameObject.Find("White Promotion").GetComponent<Canvas>().enabled = true;
+                    }
+                    else
+                    {
+                        GameObject.Find("Black Promotion").GetComponent<Canvas>().enabled = true;
+                    }
                     promotingPawn = true;
                     promotingPos = new Vector2Int(file, rank);
-                    //try
-                    //{
-                    //    Destroy(GameObject.Find(file.ToString() + "," + rank.ToString()).transform.GetChild(0).gameObject);
-                    //}
-                    //catch { }
-                    //selectedGO.transform.SetParent(GameObject.Find(file.ToString() + "," + rank.ToString()).transform);
-                    //selectedGO.transform.position = GameObject.Find(file.ToString() + "," + rank.ToString()).transform.position;
-                }
-                else if (selectedPiece.GetType().Equals(typeof(Pawn)) && rank == 0)
-                {
-                    GameObject.Find("Black Promotion").GetComponent<Canvas>().enabled = true;
-                    promotingPawn = true;
-                    promotingPos = new Vector2Int(file, rank);
-                    //try
-                    //{
-                    //    Destroy(GameObject.Find(file.ToString() + "," + rank.ToString()).transform.GetChild(0).gameObject);
-                    //}
-                    //catch { }
-                    //selectedGO.transform.SetParent(GameObject.Find(file.ToString() + "," + rank.ToString()).transform);
-                    //selectedGO.transform.position = GameObject.Find(file.ToString() + "," + rank.ToString()).transform.position;
+                    try
+                    {
+                        Destroy(GameObject.Find(file.ToString() + "," + rank.ToString()).transform.GetChild(0).gameObject);
+                    }
+                    catch { }
+                    selectedGO.transform.SetParent(GameObject.Find(file.ToString() + "," + rank.ToString()).transform);
+                    selectedGO.transform.position = GameObject.Find(file.ToString() + "," + rank.ToString()).transform.position;
                 }
                 else
                 {
-                    player.CmdMove(x, y, file, rank);
+                    Game.currentPlayer.move(x, y, file, rank);
+                    Game.currentPlayer.CmdMove(x, y, file, rank);
                     selectedPiece = null;
                     selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
                     selectedGO = null;
                 }
-                //else
-                //{
-                //    selectedPiece = null;
-                //    selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
-                //    selectedGO = null;
-                //}
-                //if (promotingPawn == false)
-                //{
-                //    player.CmdMove(x, y, file, rank);
-                //    selectedPiece = null;
-                //    selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
-                //    selectedGO = null;
-                //}
-                //try
-                //{
-                //    pieceTaken(GameObject.Find(file.ToString() + "," + rank.ToString()).transform.GetChild(0).gameObject);
-                //}
-                //catch { }
             }
             else if (selectedPiece != null && !selectedPiece.generatePossibleMoves(board).Contains(new Vector2Int(file, rank)))
             {
@@ -129,12 +109,20 @@ public class UI : NetworkBehaviour {
                 for (int i = 0; i < possibleMoves.Count; i++)
                 {
                     Vector2Int sq = possibleMoves[i];
-                    prevMaterials[i] = GameObject.Find(sq.x.ToString() + "," + sq.y.ToString()).GetComponent<Image>().material;
-                    prevSquares[i] = GameObject.Find(sq.x.ToString() + "," + sq.y.ToString());
-                    GameObject.Find(sq.x.ToString() + "," + sq.y.ToString()).GetComponent<Image>().material = (Material)Resources.Load("Materials/SelectedSquare");
+                    GameObject dot = new GameObject();
+                    dot.name = "dot";
+                    dot.transform.parent = GameObject.Find("Canvas").transform;
+                    dot.transform.position = GameObject.Find(sq.x.ToString() + "," + sq.y.ToString()).transform.position;
+                    dot.AddComponent<Image>();
+                    Sprite sprite = Resources.Load<Sprite>("Materials/Dot");
+                    dot.GetComponent<Image>().sprite = sprite;
+                    dot.GetComponent<Image>().color = new Color32(0, 0, 0, 75);
+                    dot.GetComponent<Image>().raycastTarget = false;
+                    dot.GetComponent<RectTransform>().sizeDelta = new Vector2(70,70);
+                    dot.GetComponent<RectTransform>().localScale = Vector3.one;
+                    prevSquares[i] = dot;
                 }
-                prevMaterials[prevMaterials.Length - 1] = image.material;
-                prevSquares[prevSquares.Length - 1] = GameObject.Find(image.gameObject.name);
+                prevMaterial = image.material;
                 image.material = (Material)Resources.Load("Materials/SelectedSquare");
                 selectedPiece = board.getPiece(file, rank);
                 selectedGO = GameObject.Find(file + "," + rank).transform.GetChild(0).gameObject;
@@ -174,7 +162,7 @@ public class UI : NetworkBehaviour {
         {
             colour = "Black";
         }
-        player.CmdpromotePawn(image.name, colour, square.x, square.y, promotingPos.x, promotingPos.y);
+        Game.currentPlayer.CmdpromotePawn(image.name, colour, square.x, square.y, promotingPos.x, promotingPos.y);
         selectedPiece = null;
         selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
         selectedGO = null;
@@ -200,62 +188,17 @@ public class UI : NetworkBehaviour {
         GameObject.Find("Black Moves").GetComponent<Text>().text = blackMoves;
     }
 
-    public void seeIfCheckOrStaleMate()
+    public void writeInChat(InputField chatText)
     {
-        if (board.isCheckMate(board.wKing) == true)
+        if(Game.player1.GetComponent<NetworkIdentity>().hasAuthority == true)
         {
-            GameObject.Find("Game End").GetComponent<Canvas>().enabled = true;
-            GameObject.Find("Game End").transform.GetChild(0).GetComponent<Text>().text = "Checkmate!\n\nBlack Wins";
-        }
-        else if (board.isCheckMate(board.bKing) == true)
-        {
-            GameObject.Find("Game End").GetComponent<Canvas>().enabled = true;
-            GameObject.Find("Game End").transform.GetChild(0).GetComponent<Text>().text = "Checkmate!\n\nWhite Wins";
-        }
-        else if (board.isStaleMate(board.wKing) == true)
-        {
-            GameObject.Find("Game End").GetComponent<Canvas>().enabled = true;
-            GameObject.Find("Game End").transform.GetChild(0).GetComponent<Text>().text = "Stalemate!\n\nDraw";
-        }
-        else if (board.isStaleMate(board.bKing) == true)
-        {
-            GameObject.Find("Game End").GetComponent<Canvas>().enabled = true;
-            GameObject.Find("Game End").transform.GetChild(0).GetComponent<Text>().text = "Stalemate!\n\nDraw";
-        }
-    }
-
-    public void pieceTaken(GameObject go)
-    {
-        if(selectedPiece.colour == Colour.Black)
-        {
-            if(!whitePiecesTaken.Contains(go.name))
-            {
-                whitePiecesTaken.Add(go.name);
-                go.transform.parent = GameObject.Find("White Taken Pieces").transform.GetChild(whitePiecesTaken.Count - 1);
-                go.transform.position = GameObject.Find("White Taken Pieces").transform.GetChild(whitePiecesTaken.Count - 1).transform.position;
-            }
-            else
-            {
-                go.transform.parent = GameObject.Find("White Taken Pieces").transform.GetChild(whitePiecesTaken.IndexOf(go.name));
-                go.transform.position = GameObject.Find("White Taken Pieces").transform.GetChild(whitePiecesTaken.IndexOf(go.name)).transform.position;
-                go.transform.parent.GetComponent<TextMesh>().text = "x" + GameObject.Find("White Taken Pieces").transform.GetChild(whitePiecesTaken.IndexOf(go.name)).childCount.ToString();
-            }
+            Game.player1.CmdWriteInChat(chatText.text);
         }
         else
         {
-            if (!blackPiecesTaken.Contains(go.name))
-            {
-                blackPiecesTaken.Add(go.name);
-                go.transform.parent = GameObject.Find("Black Taken Pieces").transform.GetChild(blackPiecesTaken.Count - 1);
-                go.transform.position = GameObject.Find("Black Taken Pieces").transform.GetChild(blackPiecesTaken.Count - 1).transform.position;
-            }
-            else
-            {
-                go.transform.parent = GameObject.Find("Black Taken Pieces").transform.GetChild(blackPiecesTaken.IndexOf(go.name));
-                go.transform.position = GameObject.Find("Black Taken Pieces").transform.GetChild(blackPiecesTaken.IndexOf(go.name)).transform.position;
-                go.transform.parent.GetComponent<TextMesh>().text = "x" + GameObject.Find("Black Taken Pieces").transform.GetChild(blackPiecesTaken.IndexOf(go.name)).childCount.ToString();
-            }
+            Game.player2.CmdWriteInChat(chatText.text);
         }
+        chatText.text = "";
     }
 
     public void fenEntered(InputField fenInput)

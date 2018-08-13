@@ -8,9 +8,13 @@ public class Game : MonoBehaviour {
     public static Board board;
     public static Player player1;
     public static Player player2;
+    public static Player currentPlayer;
 
-	// Use this for initialization
-	void Awake() {
+    public static ArrayList whitePiecesTaken = new ArrayList();
+    public static ArrayList blackPiecesTaken = new ArrayList();
+
+    // Use this for initialization
+    void Awake() {
         board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     }
 	

@@ -9,15 +9,18 @@ public class Player : NetworkBehaviour {
 
     public void Start()
     {
+        //Game.board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         if (Game.player1 == null)
         {
+            UI.board = Game.board;
             Game.player1 = this;
             name = "Player 1";
             if(isLocalPlayer)
             {
                 GameObject.Find("Board").name = "White Board";
+                loadPieces();
             }
-            UI.player = this;
+            Game.currentPlayer = this;
         }
         else
         {
@@ -27,26 +30,83 @@ public class Player : NetworkBehaviour {
             {
                 GameObject.Find("Board").transform.eulerAngles = new Vector3(0, 0, 180);
                 GameObject.Find("Board").name = "Black Board";
+                loadPieces();
             }
-            for (int i = 0; i < 8; i++)
+        }
+    }
+
+    public void loadPieces()
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
             {
-                for (int j = 0; j < 8; j++)
+                if (Game.board.squares[i, j] != null)
                 {
-                    if (GameObject.Find(i.ToString() + "," + j.ToString()).transform.childCount != 0)
-                    {
-                        GameObject go = GameObject.Find(i.ToString() + "," + j.ToString()).transform.GetChild(0).gameObject;
-                        Destroy(go);
-                    }
-                    if (Game.board.squares[i, j] != null)
-                    {
-                        GameObject go = (GameObject)Instantiate(Resources.Load(Game.board.squares[i, j].ToString().Replace(" ", string.Empty)));
-                        go.name = Game.board.squares[i, j].ToString();
-                        go.transform.SetParent(GameObject.Find(i.ToString() + "," + j.ToString()).transform);
-                        go.transform.position = GameObject.Find(i.ToString() + "," + j.ToString()).transform.position;
-                    }
+                    GameObject go = (GameObject)Instantiate(Resources.Load(Game.board.squares[i, j].ToString().Replace(" ", string.Empty)));
+                    go.name = Game.board.squares[i, j].ToString();
+                    go.transform.SetParent(GameObject.Find(i.ToString() + "," + j.ToString()).transform);
+                    go.transform.position = GameObject.Find(i.ToString() + "," + j.ToString()).transform.position;
                 }
             }
         }
+    }
+
+    public void move(int a, int b, int c, int d)
+    {
+        Piece rookToCastle = UI.board.isCastling(a, b, c, d);
+        if (rookToCastle != null)
+        {
+            string pos = UI.board.getPosition(rookToCastle).x.ToString() + "," + UI.board.getPosition(rookToCastle).y.ToString();
+            GameObject rook = GameObject.Find(pos).transform.GetChild(0).gameObject;
+            pos = ((a + c) / 2).ToString() + "," + UI.board.getPosition(rookToCastle).y.ToString();
+            GameObject square = GameObject.Find(pos).gameObject;
+            rook.transform.SetParent(square.transform);
+            rook.transform.position = square.transform.position;
+        }
+        else if(UI.board.enPassant == new Vector2Int(c, d))
+        {
+            if(UI.board.squares[a, b].colour == Colour.White)
+            {
+                pieceTaken(GameObject.Find(c.ToString() + "," + (d - 1).ToString()).transform.GetChild(0).gameObject);
+            }
+            else
+            {
+                pieceTaken(GameObject.Find(c.ToString() + "," + (d + 1).ToString()).transform.GetChild(0).gameObject);
+            }
+        }
+        try
+        {
+            GameObject to = GameObject.Find(c.ToString() + "," + d.ToString()).transform.GetChild(0).gameObject;
+            //Destroy(to);
+            pieceTaken(to);
+        }
+        catch { }
+        GameObject piece = GameObject.Find(a.ToString() + "," + b.ToString()).transform.GetChild(0).gameObject;
+        GameObject parent = GameObject.Find(c.ToString() + "," + d.ToString()).gameObject;
+        piece.transform.SetParent(parent.transform);
+        piece.transform.position = parent.transform.position;
+        if (UI.prevSquare1 != null)
+        {
+            int file = int.Parse(UI.prevSquare1.name.Substring(0, 1));
+            int rank = int.Parse(UI.prevSquare1.name.Substring(2, 1));
+            UI.prevSquare1.GetComponent<Image>().material = (Material)Resources.Load("Materials/LightSquare");
+            if ((file + rank) % 2 == 0)
+            {
+                UI.prevSquare1.GetComponent<Image>().material = (Material)Resources.Load("Materials/DarkSquare");
+            }
+            file = int.Parse(UI.prevSquare2.name.Substring(0, 1));
+            rank = int.Parse(UI.prevSquare2.name.Substring(2, 1));
+            UI.prevSquare2.GetComponent<Image>().material = (Material)Resources.Load("Materials/LightSquare");
+            if ((file + rank) % 2 == 0)
+            {
+                UI.prevSquare2.GetComponent<Image>().material = (Material)Resources.Load("Materials/DarkSquare");
+            }
+        }
+        UI.prevSquare1 = GameObject.Find(a.ToString() + "," + b.ToString());
+        UI.prevSquare2 = GameObject.Find(c.ToString() + "," + d.ToString());
+        UI.prevSquare1.GetComponent<Image>().material = (Material)Resources.Load("Materials/PrevSquare");
+        UI.prevSquare2.GetComponent<Image>().material = (Material)Resources.Load("Materials/PrevSquare");
     }
 
     [Command]
@@ -58,26 +118,20 @@ public class Player : NetworkBehaviour {
     [ClientRpc]
     public void RpcMove(int a, int b, int c, int d)
     {
-        //print(this);
-        UI.board.movePiece(a, b, c, d);
-        try
+        if(!isLocalPlayer)
         {
-            GameObject to = GameObject.Find(c.ToString() + "," + d.ToString()).transform.GetChild(0).gameObject;
-            Destroy(to);
+            move(a, b,c, d);
         }
-        catch { }
-        GameObject go = GameObject.Find(a.ToString() + "," + b.ToString()).transform.GetChild(0).gameObject;
-        GameObject parent = GameObject.Find(c.ToString() + "," + d.ToString()).gameObject;
-        go.transform.SetParent(parent.transform);
-        go.transform.position = parent.transform.position;
-        if (UI.player == Game.player1)
+
+        if (Game.currentPlayer == Game.player1)
         {
-            UI.player = Game.player2;
+            Game.currentPlayer = Game.player2;
         }
         else
         {
-            UI.player = Game.player1;
+            Game.currentPlayer = Game.player1;
         }
+        UI.board.movePiece(a, b, c, d);
         seeIfCheckOrStaleMate();
     }
 
@@ -135,20 +189,59 @@ public class Player : NetworkBehaviour {
             Destroy(to);
         }
         catch { }
-        Destroy(GameObject.Find(a.ToString() + "," + b.ToString()).transform.GetChild(0).gameObject);
+        if(!isLocalPlayer)
+        {
+            Destroy(GameObject.Find(a.ToString() + "," + b.ToString()).transform.GetChild(0).gameObject);
+        }
         GameObject go = (GameObject)Instantiate(Resources.Load(UI.board.squares[c, d].ToString().Replace(" ", string.Empty)));
         GameObject parent = GameObject.Find(c.ToString() + "," + d.ToString()).gameObject;
         go.transform.SetParent(parent.transform);
         go.transform.position = parent.transform.position;
-        if (UI.player == Game.player1)
+
+        if (Game.currentPlayer == Game.player1)
         {
-            UI.player = Game.player2;
+            Game.currentPlayer = Game.player2;
         }
         else
         {
-            UI.player = Game.player1;
+            Game.currentPlayer = Game.player1;
         }
         seeIfCheckOrStaleMate();
+    }
+
+    public void pieceTaken(GameObject piece)
+    {
+        if (piece.name.Contains("Black"))
+        {
+            if (!Game.whitePiecesTaken.Contains(piece.name))
+            {
+                Game.whitePiecesTaken.Add(piece.name);
+                piece.transform.parent = GameObject.Find("White Taken Pieces").transform.GetChild(Game.whitePiecesTaken.Count - 1);
+                piece.transform.position = GameObject.Find("White Taken Pieces").transform.GetChild(Game.whitePiecesTaken.Count - 1).transform.position;
+            }
+            else
+            {
+                piece.transform.parent = GameObject.Find("White Taken Pieces").transform.GetChild(Game.whitePiecesTaken.IndexOf(piece.name));
+                piece.transform.position = GameObject.Find("White Taken Pieces").transform.GetChild(Game.whitePiecesTaken.IndexOf(piece.name)).transform.position;
+                piece.transform.parent.GetComponent<TextMesh>().text = GameObject.Find("White Taken Pieces").transform.GetChild(Game.whitePiecesTaken.IndexOf(piece.name)).childCount.ToString();
+            }
+        }
+        else
+        {
+            if (!Game.blackPiecesTaken.Contains(piece.name))
+            {
+                Game.blackPiecesTaken.Add(piece.name);
+                piece.transform.parent = GameObject.Find("Black Taken Pieces").transform.GetChild(Game.blackPiecesTaken.Count - 1);
+                piece.transform.position = GameObject.Find("Black Taken Pieces").transform.GetChild(Game.blackPiecesTaken.Count - 1).transform.position;
+            }
+            else
+            {
+                piece.transform.parent = GameObject.Find("Black Taken Pieces").transform.GetChild(Game.blackPiecesTaken.IndexOf(piece.name));
+                piece.transform.position = GameObject.Find("Black Taken Pieces").transform.GetChild(Game.blackPiecesTaken.IndexOf(piece.name)).transform.position;
+                piece.transform.parent.GetComponent<TextMesh>().text = GameObject.Find("Black Taken Pieces").transform.GetChild(Game.blackPiecesTaken.IndexOf(piece.name)).childCount.ToString();
+            }
+        }
+        piece.transform.localScale = new Vector3(100, 100, 100);
     }
 
     public void seeIfCheckOrStaleMate()
@@ -173,5 +266,23 @@ public class Player : NetworkBehaviour {
             GameObject.Find("Game End").GetComponent<Canvas>().enabled = true;
             GameObject.Find("Game End").transform.GetChild(0).GetComponent<Text>().text = "Stalemate!\n\nDraw";
         }
+    }
+
+    [Command]
+    public void CmdWriteInChat(string chatText)
+    {
+        RpcWriteInChat(chatText);
+    }
+
+    [ClientRpc]
+    public void RpcWriteInChat(string chatText)
+    {
+        string text = "\nPlayer 1: ";
+        if(this == Game.player2)
+        {
+            text = "\nPlayer 2: ";
+        }
+        text += chatText;
+        GameObject.Find("Chat").transform.GetChild(0).GetComponent<Text>().text += text;
     }
 }

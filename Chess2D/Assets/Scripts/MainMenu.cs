@@ -16,17 +16,17 @@ public class MainMenu : MonoBehaviour {
 		
 	}
 
-    public void newGame()
+    public void singlePlayer()
     {
         using (StreamWriter sw = new StreamWriter("Assets/GameStatus.txt", false))
         {
             sw.WriteLine("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         }
-        SceneManager.LoadSceneAsync("MainScene");
+        SceneManager.LoadSceneAsync("SinglePlayer");
     }
 
-    public void continueGame()
+    public void multiplayer()
     {
-        SceneManager.LoadSceneAsync("MainScene");
+        SceneManager.LoadSceneAsync("Multiplayer");
     }
 }

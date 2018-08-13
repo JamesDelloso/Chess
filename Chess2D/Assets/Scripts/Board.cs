@@ -136,7 +136,7 @@ public class Board {
         {
             halfMove = 0;
         }
-        moves.Add(PGN.convert(this, piece, fromX, toX, toY));
+        moves.Add(PGN.convertToString(this, piece, fromX, toX, toY));
         squares[toX, toY] = piece;
         squares[fromX, fromY] = null;
         whitesTurn = !whitesTurn;
@@ -148,6 +148,34 @@ public class Board {
                 p.generatePossibleMoves(this);
             }
         }
+    }
+
+    public Piece isCastling(int fromX, int fromY, int toX, int toY)
+    {
+        Piece piece = getPiece(fromX, fromY);
+        if (piece.ToString() == "White King")
+        {
+            if (fromX == 4 && fromY == 0 && toX == 6 && toY == 0)
+            {
+                return getPiece(7, 0);
+            }
+            else if (fromX == 4 && fromY == 0 && toX == 2 && toY == 0)
+            {
+                return getPiece(0, 0);
+            }
+        }
+        else if (piece.ToString() == "Black King")
+        {
+            if (fromX == 4 && fromY == 7 && toX == 6 && toY == 7)
+            {
+                return getPiece(7, 7);
+            }
+            else if (fromX == 4 && fromY == 7 && toX == 2 && toY == 7)
+            {
+                return getPiece(0, 7);
+            }
+        }
+        return null;
     }
 
     public bool isCheckMate(King king)
