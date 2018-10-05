@@ -1,12 +1,13 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Bishop : Piece {
-    
+
     public Bishop(Colour colour) : base(colour)
     {
-
+        value = 3;
     }
 
     public override List<Vector2Int> generatePossibleMoves(Board board)
@@ -49,5 +50,11 @@ public class Bishop : Piece {
         }
         removePossibleChecks(board);
         return possibleMoves;
+    }
+
+    public override int getMobilityValue(int file, int rank)
+    {
+  
+        return file + rank + 7 - (file + rank);
     }
 }

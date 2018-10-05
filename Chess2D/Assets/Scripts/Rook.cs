@@ -6,7 +6,7 @@ public class Rook : Piece {
 
     public Rook(Colour colour) : base(colour)
     {
-
+        value = 5;
     }
 
     public override List<Vector2Int> generatePossibleMoves(Board board)
@@ -45,5 +45,10 @@ public class Rook : Piece {
         }
         removePossibleChecks(board);
         return possibleMoves;
+    }
+
+    public override int getMobilityValue(int file, int rank)
+    {
+        return 14;
     }
 }

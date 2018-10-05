@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,7 +7,7 @@ public class King : Piece {
 
     public King(Colour colour) : base(colour)
     {
-
+        value = 1000;
     }
 
     public override List<Vector2Int> generatePossibleMoves(Board board)
@@ -281,4 +282,21 @@ public class King : Piece {
         }
         return false;
     }
+
+    public override int getMobilityValue(int file, int rank)
+    {
+        if(file == 0 || file == 7 || rank == 0 || rank == 7)
+        {
+            if((file == 0 && rank == 0) || (file == 0 && rank == 7) || (file == 7 && rank == 0) || (file == 7 && rank == 7))
+            {
+                return 3;
+            }
+            else
+            {
+                return 5;
+            }
+        }
+        return 8;
+    }
+
 }

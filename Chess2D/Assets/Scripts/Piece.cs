@@ -6,6 +6,7 @@ public abstract class Piece {
 
     public Colour colour;
     public List<Vector2Int> possibleMoves;
+    public int value;
 
     public Piece(Colour colour)
     {
@@ -13,6 +14,8 @@ public abstract class Piece {
     }
 
     public abstract List<Vector2Int> generatePossibleMoves(Board board);
+
+    public abstract int getMobilityValue(int file, int rank);
 
     protected bool checkSquare(Board board, int file, int rank)
     {
@@ -45,10 +48,12 @@ public abstract class Piece {
             bool isCheck = false;
             if (colour == Colour.White)
             {
+                if(board.wKing != null)
                 isCheck = board.wKing.isCheck(board);
             }
             else
             {
+                if(board.bKing != null)
                 isCheck = board.bKing.isCheck(board);
             }
             board.squares[possibleMoves[i].x, possibleMoves[i].y] = p;
@@ -62,7 +67,7 @@ public abstract class Piece {
         {
             possibleMoves.Remove(v);
         }
-    } 
+    }
 
     public override string ToString()
     {

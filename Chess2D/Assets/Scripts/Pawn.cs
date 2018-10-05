@@ -8,7 +8,7 @@ public class Pawn : Piece {
 
     public Pawn(Colour colour) : base(colour)
     {
-
+        value = 1;
     }
 
     public override List<Vector2Int> generatePossibleMoves(Board board)
@@ -51,10 +51,19 @@ public class Pawn : Piece {
             possibleMoves.Add(new Vector2Int(f,r));
             return true;
         }
-        if (f != file && board.getPiece(f, r) != null && board.getPiece(f, r).colour != colour || (board.enPassant.Equals(new Vector2Int(f, r))))
+        if (f != file && board.getPiece(f, r) != null && board.getPiece(f, r).colour != colour || (board.enPassant.Equals(new Vector2Int(f, r)) && board.enPassantColour == colour))
         {
             possibleMoves.Add(new Vector2Int(f, r));
         }
         return false;
+    }
+
+    public override int getMobilityValue(int file, int rank)
+    {
+        if(file == 0 || file == 7)
+        {
+            return 2;
+        }
+        return 3;
     }
 }

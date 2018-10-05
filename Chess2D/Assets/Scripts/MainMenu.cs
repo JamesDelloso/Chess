@@ -19,17 +19,17 @@ public class MainMenu : NetworkBehaviour {
 
     public void singlePlayer()
     {
-        using (StreamWriter sw = new StreamWriter("Assets/GameStatus.txt", false))
-        {
-            sw.WriteLine("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        }
+        GameObject.Find("Panel").GetComponent<AudioSource>().Play();
         Game.mode = Game.Mode.SinglePlayer;
         SceneManager.LoadSceneAsync("SinglePlayer");
     }
 
     public void multiplayer()
     {
+        GameObject.Find("Panel").GetComponent<AudioSource>().Play();
         Game.mode = Game.Mode.Multiplayer;
         SceneManager.LoadSceneAsync("Multiplayer");
+        //SceneManager.LoadSceneAsync("MultiplayerLobby");
+        //SceneManager.LoadSceneAsync("Multiplayer",LoadSceneMode.Additive);
     }
 }

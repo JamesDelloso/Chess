@@ -6,8 +6,9 @@ public class Board {
 
     //private string fen;
     public Piece[,] squares = new Piece[8, 8];
+    public Board prevBoard;
     public Vector2Int? enPassant;
-    BitArray ba = new BitArray(64);
+    public Colour enPassantColour;
     public bool whitesTurn = true;
     public bool wkCastle = false;
     public bool wqCastle = false;
@@ -18,6 +19,17 @@ public class Board {
     public King wKing;
     public King bKing;
     public List<string> moves = new List<string>();
+    public Vector2Int pos1;
+    public Vector2Int pos2;
+    public Piece piece1;
+    public Piece piece2;
+    public Piece[,] prevSquares = new Piece[8,8];
+    public Piece enPassantUndo;
+
+    public Board()
+    {
+
+    }
 
     public Board(string fen)
     {
@@ -64,25 +76,47 @@ public class Board {
 
     public void movePiece(int fromX, int fromY, int toX, int toY)
     {
+        piece1 = getPiece(fromX, fromY);
+        pos1 = new Vector2Int(fromX, fromY);
+        piece2 = getPiece(toX, toY);
+        pos2 = new Vector2Int(toX, toY);
         halfMove++;
+        //Debug.Log(fromX + "," + fromY);
         Piece piece = getPiece(fromX, fromY);
+        //Debug.Log(piece);
         if (piece.GetType().Equals(typeof(Pawn)) && enPassant.Equals(new Vector2Int(toX, toY)))
         {
             if(piece.colour == Colour.White)
             {
+                //enPassantUndo = getPiece(toX, 4);
+                //piece2 = getPiece(toX, 4);
+                //pos2 = new Vector2Int(toX, 4);
                 squares[toX, 4] = null;
             }
             else
             {
+                //enPassantUndo = getPiece(toX, 3);
+                //piece2 = getPiece(toX, 3);
+                //pos2 = new Vector2Int(toX, 3);
                 squares[toX, 3] = null;
             }
         }
+        //else
+        //{
+        //    piece2 = getPiece(toX, toY);
+        //    pos2 = new Vector2Int(toX, toY);
+        //}
         enPassant = null;
         if (piece.GetType().Equals(typeof(Pawn)))
         {
             if(Mathf.Abs(fromY - toY) == 2)
             {
                 enPassant = new Vector2Int(fromX, (fromY + toY) / 2);
+                enPassantColour = Colour.Black;
+                if (piece.colour == Colour.Black)
+                {
+                    enPassantColour = Colour.White;
+                }
             }
             halfMove = 0;
         }
@@ -141,11 +175,54 @@ public class Board {
         squares[fromX, fromY] = null;
         whitesTurn = !whitesTurn;
         fullMove += 0.5f;
-        Debug.Log(FEN.generate(this));
+        //Debug.Log(FEN.generate(this));
         foreach(Piece p in squares)
         {
             if(p != null) {
                 p.generatePossibleMoves(this);
+            }
+        }
+        Board newBoard = new Board(FEN.generate(this));
+        Game.boardHistory.Add(newBoard);
+    }
+
+    public void undo()
+    {
+        squares[pos1.x, pos1.y] = piece1;
+        squares[pos2.x, pos2.y] = piece2;
+        whitesTurn = !whitesTurn;
+
+        foreach (Piece p in squares)
+        {
+            if (p != null)
+            {
+                p.generatePossibleMoves(this);
+            }
+        }
+        //squares = prevBoard.squares;
+        //movePiece(undoMoveFrom.x, undoMoveFrom.y, undoMoveTo.x, undoMoveTo.y);
+        //squares = prevSquares;
+        //prevBoard.MemberwiseClone();
+        //enPassant = prevBoard.enPassant;
+        //whitesTurn = prevBoard.whitesTurn;
+        //wkCastle = prevBoard.wkCastle;
+        //wqCastle = prevBoard.wqCastle;
+        //bkCastle = prevBoard.bkCastle;
+        //bqCastle = prevBoard.bqCastle;
+        //halfMove = prevBoard.halfMove;
+        //fullMove = prevBoard.fullMove;
+        //wKing = (King)squares[prevBoard.getPosition(prevBoard.wKing).x, prevBoard.getPosition(prevBoard.wKing).y];
+        //bKing = (King)squares[prevBoard.getPosition(prevBoard.bKing).x, prevBoard.getPosition(prevBoard.bKing).y];
+        //moves = prevBoard.moves;
+    }
+
+    public void copy()
+    {
+        for(int i=0;i<8;i++)
+        {
+            for (int j=0; j < 8;j++)
+            {
+                prevSquares[i, j] = squares[i, j];
             }
         }
     }
@@ -233,5 +310,33 @@ public class Board {
             }
         }
         return new Vector2Int(-1, -1);
+    }
+
+    public int getValue(Colour colour)
+    {
+        int value = 0;
+        foreach(Piece piece in squares)
+        {
+            if(piece != null && piece.colour == colour)
+            {
+                //value += piece.possibleMoves.Count;
+                //value += piece.getMobilityValue(getPosition(piece).x, getPosition(piece).y);
+                //value += piece.value * 10;
+                value += piece.value;
+            }
+            else if(piece != null && piece.colour != colour)
+            {
+                //value -= piece.possibleMoves.Count;
+                //value -= piece.getMobilityValue(getPosition(piece).x, getPosition(piece).y);
+                //value -= piece.value * 10;
+                value -= piece.value;
+            }
+        }
+        return value;
+    }
+
+    public string getFen()
+    {
+        return FEN.generate(this);
     }
 }

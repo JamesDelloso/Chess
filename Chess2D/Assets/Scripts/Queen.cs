@@ -6,7 +6,7 @@ public class Queen : Piece {
 
     public Queen(Colour colour) : base(colour)
     {
-
+        value = 9;
     }
 
     public override List<Vector2Int> generatePossibleMoves(Board board)
@@ -77,5 +77,10 @@ public class Queen : Piece {
         }
         removePossibleChecks(board);
         return possibleMoves;
+    }
+
+    public override int getMobilityValue(int file, int rank)
+    {
+        return 14 + file + rank + 7 - (file + rank);
     }
 }

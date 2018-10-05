@@ -1,13 +1,17 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.Networking.Match;
+using UnityEngine.Networking.Types;
 
 public class Game : MonoBehaviour {
 
     public static Board board;
     public static Player player1;
     public static Player player2;
+    public static AI ai;
     public static Player currentPlayer;
 
     public static ArrayList whitePiecesTaken = new ArrayList();
@@ -15,6 +19,10 @@ public class Game : MonoBehaviour {
 
     public enum Mode { SinglePlayer, Multiplayer};
     public static Mode mode;
+
+    public static int roomNum;
+
+    public static List<Board> boardHistory = new List<Board>();
 
     // Use this for initialization
     void Awake() {
@@ -28,6 +36,17 @@ public class Game : MonoBehaviour {
             GameObject player = new GameObject();
             player.AddComponent<Player>();
             player.GetComponent<NetworkIdentity>().localPlayerAuthority = true;
+            ai = new AI(Colour.Black);
+            using (StreamReader sr = new StreamReader("Assets/GameStatus.txt"))
+            {
+                //board = new Board(sr.ReadLine());
+            }
+            boardHistory.Add(new Board(FEN.generate(board)));
+        }
+        else
+        {
+            //NetworkManager.singleton.StartMatchMaker();
+            //NetworkManager.singleton.matchMaker.ListMatches(0, 100, "", true, 0, 0, OnMatchList);
         }
     }
 

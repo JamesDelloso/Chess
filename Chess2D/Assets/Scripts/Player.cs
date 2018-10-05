@@ -4,8 +4,12 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using UnityEngine.Networking.Match;
 
 public class Player : NetworkBehaviour {
+
+    public List<Piece> pieces = new List<Piece>();
+    public Colour colour;
 
     public void Start()
     {
@@ -14,7 +18,8 @@ public class Player : NetworkBehaviour {
         {
             Game.player1 = this;
             name = "Player 1";
-            if(isLocalPlayer || Game.mode == Game.Mode.SinglePlayer)
+            colour = Colour.White;
+            if (isLocalPlayer || Game.mode == Game.Mode.SinglePlayer)
             {
                 GameObject.Find("Board").name = "White Board";
                 loadPieces();
@@ -25,7 +30,8 @@ public class Player : NetworkBehaviour {
         {
             Game.player2 = this;
             name = "Player 2";
-            if(isLocalPlayer)
+            colour = Colour.Black;
+            if (isLocalPlayer)
             {
                 GameObject.Find("Board").transform.eulerAngles = new Vector3(0, 0, 180);
                 GameObject.Find("Board").name = "Black Board";
@@ -40,6 +46,11 @@ public class Player : NetworkBehaviour {
         {
             for (int j = 0; j < 8; j++)
             {
+                GameObject.Find(i.ToString() + "," + j.ToString()).GetComponent<Image>().material = (Material)Resources.Load("Materials/LightSquare");
+                if ((i+j) % 2 == 0)
+                {
+                    GameObject.Find(i.ToString() + "," + j.ToString()).GetComponent<Image>().material = (Material)Resources.Load("Materials/DarkSquare");
+                }
                 if (GameObject.Find(i.ToString() + "," + j.ToString()).transform.childCount > 0)
                 {
                     Destroy(GameObject.Find(i.ToString() + "," + j.ToString()).transform.GetChild(0).gameObject);
@@ -50,8 +61,16 @@ public class Player : NetworkBehaviour {
                     go.name = Game.board.squares[i, j].ToString();
                     go.transform.SetParent(GameObject.Find(i.ToString() + "," + j.ToString()).transform);
                     go.transform.position = GameObject.Find(i.ToString() + "," + j.ToString()).transform.position;
+                    if(Game.board.squares[i, j].colour == colour)
+                    {
+                        pieces.Add(Game.board.squares[i, j]);
+                    }
                 }
             }
+        }
+        foreach(GameObject dot in GameObject.FindGameObjectsWithTag("dot"))
+        {
+            Destroy(dot);
         }
     }
 
@@ -216,6 +235,14 @@ public class Player : NetworkBehaviour {
     {
         if (piece.name.Contains("Black"))
         {
+            if (Game.mode == Game.Mode.SinglePlayer)
+            {
+                Game.ai.pieces.Remove(Game.board.squares[int.Parse(piece.transform.parent.name.Split(',')[0]), int.Parse(piece.transform.parent.name.Split(',')[1])]);
+            }
+            else
+            {
+                Game.player2.pieces.Remove(Game.board.squares[int.Parse(piece.transform.parent.name.Split(',')[0]), int.Parse(piece.transform.parent.name.Split(',')[1])]);
+            }
             if (!Game.whitePiecesTaken.Contains(piece.name))
             {
                 Game.whitePiecesTaken.Add(piece.name);
@@ -231,6 +258,7 @@ public class Player : NetworkBehaviour {
         }
         else
         {
+            Game.player1.pieces.Remove(Game.board.squares[int.Parse(piece.transform.parent.name.Split(',')[0]), int.Parse(piece.transform.parent.name.Split(',')[1])]);
             if (!Game.blackPiecesTaken.Contains(piece.name))
             {
                 Game.blackPiecesTaken.Add(piece.name);

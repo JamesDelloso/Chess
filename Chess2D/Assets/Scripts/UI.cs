@@ -7,6 +7,7 @@ using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 
 public class UI : MonoBehaviour {
 
@@ -21,19 +22,22 @@ public class UI : MonoBehaviour {
 
     public static GameObject prevSquare1;
     public static GameObject prevSquare2;
+    //public static List<GameObject> 
+
+    private int undoIndex = -1;
+
+    public Font arial;
+
+    //private AI ai = new AI(Colour.Black);
 
     // Use this for initialization
     void Start()
     {
-        using (StreamReader sr = new StreamReader("Assets/GameStatus.txt"))
+        //GameObject.Find("Room No.").GetComponent<Text>().text = "Room No: " + Game.roomNum;
+        if (FEN.generate(Game.board) != "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
         {
-            //Game.board = new Board(sr.ReadLine());
-            //Game.board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-            //Game.board = new Board("rnbqkbnr/pppp1ppp/8/4p3/3PP3/8/PPP2PPP/RNBQKBNR b KQkq e3 0 2");
-            //Game.board = new Board("rnbqkbnr/pppp1ppp/8/4pQ2/2BPP3/8/PPP2PPP/RNB1K1NR w KQkq - 7 5");
+            //GameObject.Find("Continue Game").GetComponent<Canvas>().enabled = true;
         }
-        //Game.board = Game.Game.board;
-        //updatePieces();
     }
 
 	// Update is called once per frame
@@ -43,7 +47,7 @@ public class UI : MonoBehaviour {
 
     public void squareSelected(Image image)
     {
-        if(promotingPawn == false && (Game.mode == Game.Mode.SinglePlayer || Game.player2 != null))
+        if(promotingPawn == false && ((Game.mode == Game.Mode.SinglePlayer && GameObject.Find("Continue Game").GetComponent<Canvas>().enabled == false )|| Game.player2 != null))
         {
             int file = int.Parse(image.name.Substring(0, 1));
             int rank = int.Parse(image.name.Substring(2, 1));
@@ -86,6 +90,11 @@ public class UI : MonoBehaviour {
                 }
                 else
                 {
+                    int audioSource = 0;
+                    if (Game.board.squares[file, rank] != null)
+                    {
+                        audioSource = 1;
+                    }
                     Game.currentPlayer.move(x, y, file, rank);
                     if(Game.mode == Game.Mode.Multiplayer)
                     {
@@ -93,12 +102,54 @@ public class UI : MonoBehaviour {
                     }
                     else
                     {
+                        if (undoIndex + 1 != Game.boardHistory.Count - 1)
+                        {
+                            List<Board> newHistory = Game.boardHistory;
+                            //Game.boardHistory = new List<Board>();
+                            //Game.board.moves = Game.boardHistory[undoIndex+1].moves;
+                            for (int i = 0; i < undoIndex + 2; i++)
+                            {
+                                newHistory.Add(new Board(FEN.generate(Game.boardHistory[i])));
+                                newHistory[i].moves = Game.boardHistory[i].moves;
+                            }
+                            Game.boardHistory = newHistory;
+                            //Game.board.moves = Game.boardHistory[Game.boardHistory.Count - 1].moves;
+                            //Game.boardHistory.Add(Game.board);
+                            print(undoIndex + 2);
+                            for (int i = undoIndex; i < GameObject.Find("Moves Grid").transform.childCount; i++)
+                            {
+                                Destroy(GameObject.Find("Moves Grid").transform.GetChild(i).gameObject);
+                            }
+                            undoIndex = Game.boardHistory.Count - 2;
+                        }
                         Game.board.movePiece(x, y, file, rank);
                         Game.currentPlayer.seeIfCheckOrStaleMate();
+                        print(Game.board.moves.Count);
+                        undoIndex++;
+                        int a;
+                        int b;
+                        int c;
+                        int d;
+                        Game.ai.getMove(Game.board, out a, out b, out c, out d);
+                        //print(a + "," + b + " : " + c + "," + d);
+                        Game.currentPlayer.move(a, b, c, d);
+                        Game.board.movePiece(a, b, c, d);
+                        Game.currentPlayer.seeIfCheckOrStaleMate();
+                        undoIndex++;
+                        using (StreamWriter sw = new StreamWriter("Assets/GameStatus.txt", false))
+                        {
+                            sw.WriteLine(FEN.generate(Game.board));
+                        }
+                        updateMoves();
                     }
                     selectedPiece = null;
                     selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
                     selectedGO = null;
+                    if (Game.board.wKing.isCheck(Game.board) || Game.board.bKing.isCheck(Game.board))
+                    {
+                        audioSource = 2;
+                    }
+                    GetComponents<AudioSource>()[audioSource].Play();
                 }
             }
             else if (selectedPiece != null && !selectedPiece.generatePossibleMoves(Game.board).Contains(new Vector2Int(file, rank)))
@@ -127,6 +178,7 @@ public class UI : MonoBehaviour {
                     dot.GetComponent<Image>().raycastTarget = false;
                     dot.GetComponent<RectTransform>().sizeDelta = new Vector2(70,70);
                     dot.GetComponent<RectTransform>().localScale = Vector3.one;
+                    dot.gameObject.tag = "dot";
                     prevSquares[i] = dot;
                 }
                 prevMaterial = image.material;
@@ -134,6 +186,7 @@ public class UI : MonoBehaviour {
                 selectedPiece = Game.board.getPiece(file, rank);
                 selectedGO = GameObject.Find(file + "," + rank).transform.GetChild(0).gameObject;
                 selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 2;
+                //Debug.Log(selectedPiece.getMobilityValue(file, rank));
             }
         }
     }
@@ -176,25 +229,6 @@ public class UI : MonoBehaviour {
         promotingPawn = false;
     }
 
-    public void updateMoves()
-    {
-        string whiteMoves = "";
-        string blackMoves = "";
-        for (int i = 0; i < Game.board.moves.Count; i++)
-        {
-            if (i % 2 == 0)
-            {
-                whiteMoves += (i/2+1) + ". " + Game.board.moves[i] + "\n";
-            }
-            else
-            {
-                blackMoves += Game.board.moves[i] + "\n";
-            }
-        }
-        GameObject.Find("White Moves").GetComponent<Text>().text = whiteMoves;
-        GameObject.Find("Black Moves").GetComponent<Text>().text = blackMoves;
-    }
-
     public void writeInChat(InputField chatText)
     {
         if(Game.player1.GetComponent<NetworkIdentity>().hasAuthority == true)
@@ -235,5 +269,100 @@ public class UI : MonoBehaviour {
         GameObject.Find("Game End").GetComponent<Canvas>().enabled = false;
         Game.board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         Game.currentPlayer.loadPieces();
+        selectedPiece = null;
+        if(selectedGO != null)
+        {
+            selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
+        }
+        selectedGO = null;
+        using (StreamWriter sw = new StreamWriter("Assets/GameStatus.txt", false))
+        {
+            sw.WriteLine(FEN.generate(Game.board));
+        }
+    }
+
+    public void continueGame(string answer)
+    {
+        if(answer == "no")
+        {
+            newGame();
+        }
+        GameObject.Find("Continue Game").GetComponent<Canvas>().enabled = false;
+        GameObject.Find("Canvas").GetComponent<AudioSource>().Play();
+
+    }
+
+
+    public void menu()
+    {
+        GameObject.Find("Canvas").GetComponent<AudioSource>().Play();
+        SceneManager.LoadSceneAsync("MainMenu");
+    }
+
+    public void undo()
+    {
+        print(undoIndex);
+        if(undoIndex == Game.boardHistory.Count - 1)
+        {
+            undoIndex--;
+        }
+        Game.boardHistory[undoIndex].moves = Game.board.moves;
+        Game.board = Game.boardHistory[undoIndex];
+        //Game.board.moves.RemoveAt(Game.board.moves.Count - 1);
+        Game.player1.loadPieces();
+        for (int i = 0; i < GameObject.Find("Moves Grid").transform.childCount; i++)
+        {
+            GameObject.Find("Moves Grid").transform.GetChild(i).GetComponent<Text>().color = new Color32(255, 255, 255, 255);
+        }
+        if (undoIndex > 0)
+        {
+            GameObject.Find("Moves Grid").transform.GetChild(undoIndex - 1).GetComponent<Text>().color = new Color32(240, 175, 40, 255);
+            undoIndex--;
+        }
+        //updateMoves();
+    }
+
+    public void redo()
+    {
+        if(undoIndex != Game.boardHistory.Count - 1)
+        {
+            Game.boardHistory[undoIndex].moves = Game.board.moves;
+            Game.board = Game.boardHistory[undoIndex + 1];
+            //Game.board.moves.RemoveAt(Game.board.moves.Count - 1);
+            Game.player1.loadPieces();
+            for (int i = 0; i < GameObject.Find("Moves Grid").transform.childCount; i++)
+            {
+                GameObject.Find("Moves Grid").transform.GetChild(i).GetComponent<Text>().color = new Color32(255, 255, 255, 255);
+            }
+            GameObject.Find("Moves Grid").transform.GetChild(undoIndex).GetComponent<Text>().color = new Color32(240, 175, 40, 255);
+            undoIndex++;
+        }
+        //updateMoves();
+    }
+
+    public void updateMoves()
+    {
+        GameObject moveText = (GameObject)Instantiate(Resources.Load("MoveText"));
+        moveText.name = Game.board.moves[Game.board.moves.Count - 1];
+        string num = "";
+        if(Game.board.moves.Count % 2 != 0)
+        {
+            if(Game.board.moves.Count / 2 < 10)
+            {
+                num = " ";
+            }
+            if(Game.board.moves.Count > 10)
+            {
+                GameObject.Find("Moves Grid").GetComponent<RectTransform>().sizeDelta = new Vector2(200, GameObject.Find("Moves Grid").GetComponent<RectTransform>().sizeDelta.y + 40);
+                GameObject.Find("Moves Grid").GetComponent<RectTransform>().localPosition = new Vector3(0, GameObject.Find("Moves Grid").GetComponent<RectTransform>().sizeDelta.y, 0);
+            }
+            num += Game.board.moves.Count / 2 + 1 + ". ";
+        }
+        moveText.GetComponent<Text>().text = num + moveText.name;
+        moveText.transform.SetParent(GameObject.Find("Moves Grid").transform, false);
+        for (int i = 0; i < GameObject.Find("Moves Grid").transform.childCount-1; i++)
+        {
+            GameObject.Find("Moves Grid").transform.GetChild(i).GetComponent<Text>().color = new Color32(255, 255, 255, 255);
+        }
     }
 }
