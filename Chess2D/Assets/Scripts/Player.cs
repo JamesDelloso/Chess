@@ -102,6 +102,7 @@ public class Player : NetworkBehaviour {
             pieceTaken(GameObject.Find(c.ToString() + "," + d.ToString()).transform.GetChild(0).gameObject);
         }
         catch { }
+        Debug.Log(a + "," + b);
         GameObject piece = GameObject.Find(a.ToString() + "," + b.ToString()).transform.GetChild(0).gameObject;
         GameObject parent = GameObject.Find(c.ToString() + "," + d.ToString()).gameObject;
         piece.transform.SetParent(parent.transform);

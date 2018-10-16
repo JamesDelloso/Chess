@@ -27,6 +27,8 @@ public class Game : MonoBehaviour {
     // Use this for initialization
     void Awake() {
         board = new Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        //board = new Board("rnbqkbnr/ppppppp1/8/8/4P1p1/8/PPPP1P1P/RNBQKBNR w KQkq - 0 2");
+        //board = new Board("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1");
     }
 
     public void Start()

@@ -38,6 +38,15 @@ public class UI : MonoBehaviour {
         {
             //GameObject.Find("Continue Game").GetComponent<Canvas>().enabled = true;
         }
+        if(Game.board.whitesTurn == false)
+        {
+            Invoke("playAI", 1);
+            undoIndex++;
+            using (StreamWriter sw = new StreamWriter("Assets/GameStatus.txt", false))
+            {
+                sw.WriteLine(FEN.generate(Game.board));
+            }
+        }
     }
 
 	// Update is called once per frame
@@ -102,39 +111,43 @@ public class UI : MonoBehaviour {
                     }
                     else
                     {
-                        if (undoIndex + 1 != Game.boardHistory.Count - 1)
-                        {
-                            List<Board> newHistory = Game.boardHistory;
-                            //Game.boardHistory = new List<Board>();
-                            //Game.board.moves = Game.boardHistory[undoIndex+1].moves;
-                            for (int i = 0; i < undoIndex + 2; i++)
-                            {
-                                newHistory.Add(new Board(FEN.generate(Game.boardHistory[i])));
-                                newHistory[i].moves = Game.boardHistory[i].moves;
-                            }
-                            Game.boardHistory = newHistory;
-                            //Game.board.moves = Game.boardHistory[Game.boardHistory.Count - 1].moves;
-                            //Game.boardHistory.Add(Game.board);
-                            print(undoIndex + 2);
-                            for (int i = undoIndex; i < GameObject.Find("Moves Grid").transform.childCount; i++)
-                            {
-                                Destroy(GameObject.Find("Moves Grid").transform.GetChild(i).gameObject);
-                            }
-                            undoIndex = Game.boardHistory.Count - 2;
-                        }
+                        //Lags game badly.
+                        //
+                        //if (undoIndex + 1 != Game.boardHistory.Count - 1)
+                        //{
+                        //    List<Board> newHistory = Game.boardHistory;
+                        //    //Game.boardHistory = new List<Board>();
+                        //    //Game.board.moves = Game.boardHistory[undoIndex+1].moves;
+                        //    for (int i = 0; i < undoIndex + 2; i++)
+                        //    {
+                        //        newHistory.Add(new Board(FEN.generate(Game.boardHistory[i])));
+                        //        newHistory[i].moves = Game.boardHistory[i].moves;
+                        //    }
+                        //    Game.boardHistory = newHistory;
+                        //    //Game.board.moves = Game.boardHistory[Game.boardHistory.Count - 1].moves;
+                        //    //Game.boardHistory.Add(Game.board);
+                        //    //print(undoIndex + 2);
+                        //    for (int i = undoIndex; i < GameObject.Find("Moves Grid").transform.childCount; i++)
+                        //    {
+                        //        Destroy(GameObject.Find("Moves Grid").transform.GetChild(i).gameObject);
+                        //    }
+                        //    undoIndex = Game.boardHistory.Count - 2;
+                        //}
                         Game.board.movePiece(x, y, file, rank);
                         Game.currentPlayer.seeIfCheckOrStaleMate();
-                        print(Game.board.moves.Count);
+                        //print(Game.board.moves.Count);
                         undoIndex++;
-                        int a;
-                        int b;
-                        int c;
-                        int d;
-                        Game.ai.getMove(Game.board, out a, out b, out c, out d);
-                        //print(a + "," + b + " : " + c + "," + d);
-                        Game.currentPlayer.move(a, b, c, d);
-                        Game.board.movePiece(a, b, c, d);
-                        Game.currentPlayer.seeIfCheckOrStaleMate();
+                        Invoke("playAI", 1);
+                        //int a;
+                        //int b;
+                        //int c;
+                        //int d;
+                        //Game.ai.getMove(Game.board, out a, out b, out c, out d);
+                        ////print(a + "," + b + " : " + c + "," + d);
+                        //Game.currentPlayer.move(a, b, c, d);
+                        //Game.board.movePiece(a, b, c, d);
+                        //Game.currentPlayer.seeIfCheckOrStaleMate();
+                        //Game.board.whitesTurn = !Game.board.whitesTurn;
                         undoIndex++;
                         using (StreamWriter sw = new StreamWriter("Assets/GameStatus.txt", false))
                         {
@@ -189,6 +202,21 @@ public class UI : MonoBehaviour {
                 //Debug.Log(selectedPiece.getMobilityValue(file, rank));
             }
         }
+    }
+
+    public void playAI()
+    {
+        int a;
+        int b;
+        int c;
+        int d;
+        Game.ai.getMove(Game.board, out a, out b, out c, out d);
+        //print(a + "," + b + " : " + c + "," + d);
+        Game.currentPlayer.move(a, b, c, d);
+        Game.board.movePiece(a, b, c, d);
+        Game.currentPlayer.seeIfCheckOrStaleMate();
+        //Game.board.whitesTurn = true;
+        print(Game.board.whitesTurn);
     }
 
     public void onDragPiece()

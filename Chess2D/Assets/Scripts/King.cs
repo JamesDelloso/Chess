@@ -26,7 +26,7 @@ public class King : Piece {
         checkSquare(board, file, rank - 1);
         checkSquare(board, file + 1, rank - 1);
 
-        if (colour == Colour.White && isCheck(board) == false && board.wqCastle == true && board.squares[1,0] == null && board.squares[2, 0] == null && board.squares[3, 0] == null && board.squares[0,0] != null && board.squares[0,0].ToString() == "White Rook")
+        if (colour == Colour.White && isCheck(board) == false && board.wqCastle == true && board.squares[1, 0] == null && board.squares[2, 0] == null && board.squares[3, 0] == null && board.squares[0, 0] != null && board.squares[0, 0].ToString() == "White Rook")
         {
             possibleMoves.Add(new Vector2Int(2, 0));
         }
