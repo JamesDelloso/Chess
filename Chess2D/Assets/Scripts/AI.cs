@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class AI {
 
-    private int count = 0;
     public Colour colour;
     public List<Piece> pieces = new List<Piece>();
 
@@ -25,7 +24,7 @@ public class AI {
         //Debug.Log("==================================================================================================");
         //Debug.Log(board.getFen());
         Board bo = new Board(board.getFen());
-        count = 0;
+        List<Vector4> moves = new List<Vector4>();
         a = 1;
         b = 7;
         c = 2;
@@ -49,11 +48,16 @@ public class AI {
                         //Debug.Log(value);
                         if (value >= maxValue)
                         {
+                            if(value > maxValue)
+                            {
+                                moves = new List<Vector4>();
+                            }
                             maxValue = value;
-                            a = i;
-                            b = j;
-                            c = pos.x;
-                            d = pos.y;
+                            moves.Add(new Vector4(i, j, pos.x, pos.y));
+                            //a = i;
+                            //b = j;
+                            //c = pos.x;
+                            //d = pos.y;
                         }
                         //board.undo(fen, piece1, piece2, new Vector2Int(i, j), new Vector2Int(pos.x, pos.y));
                         bo = new Board(fen);
@@ -62,6 +66,12 @@ public class AI {
                 }
             }
         }
+        Vector4 move = moves[Random.Range(0, moves.Count - 1)];
+        //Debug.Log(move);
+        a = (int)move.x;
+        b = (int)move.y;
+        c = (int)move.z;
+        d = (int)move.w;
     }
 
     private int min(Board board, int depth, int alpha, int beta)

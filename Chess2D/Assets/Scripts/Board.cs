@@ -18,6 +18,7 @@ public class Board {
     public King wKing;
     public King bKing;
     public List<string> moves = new List<string>();
+    public List<string> history = new List<string>();
 
     public Board(string fen)
     {
@@ -60,10 +61,12 @@ public class Board {
                 p.generatePossibleMoves(this);
             }
         }
+        history.Add(fen);
     }
 
     public void movePiece(int fromX, int fromY, int toX, int toY)
     {
+        //history.Add(getFen());
         halfMove++;
         Piece piece = getPiece(fromX, fromY);
         //Debug.Log("Moving " + piece + " from (" + fromX + "," + fromY + ") to (" + toX + "," + toY + ")");

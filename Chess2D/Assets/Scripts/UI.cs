@@ -24,7 +24,7 @@ public class UI : MonoBehaviour {
     public static GameObject prevSquare2;
     //public static List<GameObject> 
 
-    private int undoIndex = -1;
+    private int undoIndex = 0;
 
     public Font arial;
 
@@ -105,7 +105,7 @@ public class UI : MonoBehaviour {
                         audioSource = 1;
                     }
                     Game.currentPlayer.move(x, y, file, rank);
-                    if(Game.mode == Game.Mode.Multiplayer)
+                    if (Game.mode == Game.Mode.Multiplayer)
                     {
                         Game.currentPlayer.CmdMove(x, y, file, rank);
                     }
@@ -133,9 +133,30 @@ public class UI : MonoBehaviour {
                         //    }
                         //    undoIndex = Game.boardHistory.Count - 2;
                         //}
+                        if (undoIndex != Game.board.history.Count - 1)
+                        {
+                            print(Game.board.history.Count);
+                            for (int i = undoIndex+1; i < Game.board.history.Count; i++)
+                            {
+                                Game.board.history.RemoveAt(i);
+                                Game.board.moves.RemoveAt(i - 1);
+                            }
+                            Game.board.history.RemoveAt(Game.board.history.Count - 1);
+                            Game.board.moves.RemoveAt(Game.board.moves.Count - 2);
+                            for (int i = undoIndex; i < GameObject.Find("Moves Grid").transform.childCount; i++)
+                            {
+                                //Game.board.moves.RemoveAt(i);
+                                Destroy(GameObject.Find("Moves Grid").transform.GetChild(i).gameObject);
+                            }
+                        }
+                        //foreach (string s in Game.board.history)
+                        //{
+                        //    print(s);
+                        //}
                         Game.board.movePiece(x, y, file, rank);
                         Game.currentPlayer.seeIfCheckOrStaleMate();
-                        //print(Game.board.moves.Count);
+                        Game.board.history.Add(Game.board.getFen());
+                        print(Game.board.moves.Count);
                         undoIndex++;
                         Invoke("playAI", 1);
                         //int a;
@@ -215,8 +236,8 @@ public class UI : MonoBehaviour {
         Game.currentPlayer.move(a, b, c, d);
         Game.board.movePiece(a, b, c, d);
         Game.currentPlayer.seeIfCheckOrStaleMate();
-        //Game.board.whitesTurn = true;
-        print(Game.board.whitesTurn);
+        Game.board.history.Add(Game.board.getFen());
+        updateMoves();
     }
 
     public void onDragPiece()
@@ -307,6 +328,11 @@ public class UI : MonoBehaviour {
         {
             sw.WriteLine(FEN.generate(Game.board));
         }
+        for (int i = 0; i < GameObject.Find("Moves Grid").transform.childCount; i++)
+        {
+            Destroy(GameObject.Find("Moves Grid").transform.GetChild(i).gameObject);
+        }
+        undoIndex = 0;
     }
 
     public void continueGame(string answer)
@@ -329,43 +355,42 @@ public class UI : MonoBehaviour {
 
     public void undo()
     {
+        if (undoIndex > 1)
+        {
+            GameObject.Find("Moves Grid").transform.GetChild(undoIndex - 1).GetComponent<Text>().color = new Color32(255, 255, 255, 255);
+            if(undoIndex - 3 >= 0)
+            {
+                GameObject.Find("Moves Grid").transform.GetChild(undoIndex - 3).GetComponent<Text>().color = new Color32(240, 175, 40, 255);
+            }
+            List<string> bhist = Game.board.history;
+            List<string> bmoves = Game.board.moves;
+            Game.board = new Board(Game.board.history[undoIndex - 2]);
+            Game.board.history = bhist;
+            Game.board.moves = bmoves;
+            Game.player1.loadPieces();
+            undoIndex = undoIndex - 2;
+        }
         print(undoIndex);
-        if(undoIndex == Game.boardHistory.Count - 1)
-        {
-            undoIndex--;
-        }
-        Game.boardHistory[undoIndex].moves = Game.board.moves;
-        Game.board = Game.boardHistory[undoIndex];
-        //Game.board.moves.RemoveAt(Game.board.moves.Count - 1);
-        Game.player1.loadPieces();
-        for (int i = 0; i < GameObject.Find("Moves Grid").transform.childCount; i++)
-        {
-            GameObject.Find("Moves Grid").transform.GetChild(i).GetComponent<Text>().color = new Color32(255, 255, 255, 255);
-        }
-        if (undoIndex > 0)
-        {
-            GameObject.Find("Moves Grid").transform.GetChild(undoIndex - 1).GetComponent<Text>().color = new Color32(240, 175, 40, 255);
-            undoIndex--;
-        }
-        //updateMoves();
     }
 
     public void redo()
     {
-        if(undoIndex != Game.boardHistory.Count - 1)
+        if(undoIndex < Game.board.history.Count - 2)
         {
-            Game.boardHistory[undoIndex].moves = Game.board.moves;
-            Game.board = Game.boardHistory[undoIndex + 1];
-            //Game.board.moves.RemoveAt(Game.board.moves.Count - 1);
-            Game.player1.loadPieces();
-            for (int i = 0; i < GameObject.Find("Moves Grid").transform.childCount; i++)
+            if(undoIndex > 1)
             {
-                GameObject.Find("Moves Grid").transform.GetChild(i).GetComponent<Text>().color = new Color32(255, 255, 255, 255);
+                GameObject.Find("Moves Grid").transform.GetChild(undoIndex - 1).GetComponent<Text>().color = new Color32(255, 255, 255, 255);
             }
-            GameObject.Find("Moves Grid").transform.GetChild(undoIndex).GetComponent<Text>().color = new Color32(240, 175, 40, 255);
-            undoIndex++;
+            GameObject.Find("Moves Grid").transform.GetChild(undoIndex + 1).GetComponent<Text>().color = new Color32(240, 175, 40, 255);
+            List<string> bhist = Game.board.history;
+            List<string> bmoves = Game.board.moves;
+            Game.board = new Board(Game.board.history[undoIndex + 2]);
+            Game.board.history = bhist;
+            Game.board.moves = bmoves;
+            Game.player1.loadPieces();
+            undoIndex = undoIndex + 2;
         }
-        //updateMoves();
+        print(undoIndex);
     }
 
     public void updateMoves()
@@ -384,7 +409,14 @@ public class UI : MonoBehaviour {
                 GameObject.Find("Moves Grid").GetComponent<RectTransform>().sizeDelta = new Vector2(200, GameObject.Find("Moves Grid").GetComponent<RectTransform>().sizeDelta.y + 40);
                 GameObject.Find("Moves Grid").GetComponent<RectTransform>().localPosition = new Vector3(0, GameObject.Find("Moves Grid").GetComponent<RectTransform>().sizeDelta.y, 0);
             }
+            //num += Game.board.moves.Count / 2 + 1 + ". ";
             num += Game.board.moves.Count / 2 + 1 + ". ";
+            string str = "";
+            foreach(string s in Game.board.moves)
+            {
+                str += " " + s;
+            }
+            print(str);
         }
         moveText.GetComponent<Text>().text = num + moveText.name;
         moveText.transform.SetParent(GameObject.Find("Moves Grid").transform, false);
