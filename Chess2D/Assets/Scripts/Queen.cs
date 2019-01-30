@@ -79,8 +79,22 @@ public class Queen : Piece {
         return possibleMoves;
     }
 
-    public override int getMobilityValue(int file, int rank)
+    public override float getMobilityValue(int file, int rank)
     {
-        return 14 + file + rank + 7 - (file + rank);
+        List<double[]> list = new List<double[]>();
+        list.Add(new double[] { -2.0, -1.0, -1.0, -0.5, -0.5, -1.0, -1.0, -2.0 });
+        list.Add(new double[] { -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0 });
+        list.Add(new double[] { -1.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.0, -1.0 });
+        list.Add(new double[] { -0.5, 0.0, 0.5, 0.5, 0.5, 0.5, 0.0, -0.5 });
+        list.Add(new double[] { 0.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.0, -0.5 });
+        list.Add(new double[] { -1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, -1.0 });
+        list.Add(new double[] { -1.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, -1.0 });
+        list.Add(new double[] { -2.0, -1.0, -1.0, -0.5, -0.5, -1.0, -1.0, -2.0 });
+        if (colour == Colour.Black)
+        {
+            list.Reverse();
+        }
+        return (float)list[file][rank];
+        //return 14 + file + rank + 7 - (file + rank);
     }
 }

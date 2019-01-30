@@ -58,12 +58,26 @@ public class Pawn : Piece {
         return false;
     }
 
-    public override int getMobilityValue(int file, int rank)
+    public override float getMobilityValue(int file, int rank)
     {
-        if(file == 0 || file == 7)
+        List<double[]> list = new List<double[]>();
+        list.Add(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
+        list.Add(new double[] { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 });
+        list.Add(new double[] { 1.0, 1.0, 2.0, 3.0, 3.0, 2.0, 1.0, 1.0 });
+        list.Add(new double[] { 0.5, 0.5, 1.0, 2.5, 2.5, 1.0, 0.5, 0.5 });
+        list.Add(new double[] { 0.0, 0.0, 0.0, 2.0, 2.0, 0.0, 0.0, 0.0 });
+        list.Add(new double[] { 0.5, -0.5, -1.0, 0.0, 0.0, -1.0, -0.5, 0.5 });
+        list.Add(new double[] { 0.5, 1.0, 1.0, -2.0, -2.0, 1.0, 1.0, 0.5 });
+        list.Add(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
+        if (colour == Colour.Black)
         {
-            return 2;
+            list.Reverse();
         }
-        return 3;
+        return (float)list[file][rank];
+        //if(file == 0 || file == 7)
+        //{
+        //    return 2;
+        //}
+        //return 3;
     }
 }

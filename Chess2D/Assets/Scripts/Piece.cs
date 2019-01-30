@@ -15,7 +15,7 @@ public abstract class Piece {
 
     public abstract List<Vector2Int> generatePossibleMoves(Board board);
 
-    public abstract int getMobilityValue(int file, int rank);
+    public abstract float getMobilityValue(int file, int rank);
 
     protected bool checkSquare(Board board, int file, int rank)
     {

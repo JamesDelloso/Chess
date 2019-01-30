@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 public class AI {
 
@@ -19,17 +20,19 @@ public class AI {
         }
     }
 
-    public void getMove(Board board, out int a, out int b, out int c, out int d)
+    public IEnumerator getMove(Board board)
     {
+        yield return null;
+        Profiler.BeginSample("AI move search");
         //Debug.Log("==================================================================================================");
         //Debug.Log(board.getFen());
         Board bo = new Board(board.getFen());
         List<Vector4> moves = new List<Vector4>();
-        a = 1;
-        b = 7;
-        c = 2;
-        d = 5;
-        int maxValue = -10000000;
+        //a = 1;
+        //b = 7;
+        //c = 2;
+        //d = 5;
+        float maxValue = -10000000;
         for(int i=0;i<8;i++)
         {
             for(int j=0;j<8;j++)
@@ -44,7 +47,7 @@ public class AI {
                         Piece piece2 = bo.getPiece(pos.x, pos.y);
                         bo.movePiece(i, j, pos.x, pos.y);
                         //int value = board.getValue(Colour.Black);
-                        int value = min(bo, 1, -10000, 10000);
+                        float value = min(bo, 2, -10000, 10000);
                         //Debug.Log(value);
                         if (value >= maxValue)
                         {
@@ -61,6 +64,7 @@ public class AI {
                         }
                         //board.undo(fen, piece1, piece2, new Vector2Int(i, j), new Vector2Int(pos.x, pos.y));
                         bo = new Board(fen);
+                        yield return null;
                         //Debug.Log(board.getFen());
                     }
                 }
@@ -68,19 +72,25 @@ public class AI {
         }
         Vector4 move = moves[Random.Range(0, moves.Count - 1)];
         //Debug.Log(move);
-        a = (int)move.x;
-        b = (int)move.y;
-        c = (int)move.z;
-        d = (int)move.w;
+        int a = (int)move.x;
+        int b = (int)move.y;
+        int c = (int)move.z;
+        int d = (int)move.w;
+        Debug.Log(move.x + "," + move.y + "," + move.z + "," + move.w);
+        Game.currentPlayer.move(a, b, c, d);
+        Game.board.movePiece(a, b, c, d);
+        Game.currentPlayer.seeIfCheckOrStaleMate();
+        Game.board.history.Add(Game.board.getFen());
+        Profiler.EndSample();
     }
 
-    private int min(Board board, int depth, int alpha, int beta)
+    private float min(Board board, int depth, float alpha, float beta)
     {
         if (depth <= 0)
         {
             return board.getValue(Colour.Black);
         }
-        int minValue = 10000000;
+        float minValue = 10000000;
         for (int i = 0; i < 8; i++)
         {
             for (int j = 0; j < 8; j++)
@@ -116,13 +126,13 @@ public class AI {
         return minValue;
     }
 
-    private int max(Board board, int depth, int alpha, int beta)
+    private float max(Board board, int depth, float alpha, float beta)
     {
         if (depth <= 0)
         {
             return board.getValue(Colour.Black);
         }
-        int maxValue = -10000000;
+        float maxValue = -10000000;
         for (int i = 0; i < 8; i++)
         {
             for (int j = 0; j < 8; j++)

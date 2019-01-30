@@ -297,24 +297,26 @@ public class Board {
         return new Vector2Int(-1, -1);
     }
 
-    public int getValue(Colour colour)
+    public float getValue(Colour colour)
     {
-        int value = 0;
+        float value = 0;
         foreach(Piece piece in squares)
         {
             if(piece != null && piece.colour == colour)
             {
-                value += piece.possibleMoves.Count;
-                value += piece.getMobilityValue(getPosition(piece).x, getPosition(piece).y) * 2;
-                //value += piece.value * 10;
-                value += piece.value * 3;
+                //value += piece.possibleMoves.Count;
+                //value += piece.getMobilityValue(getPosition(piece).x, getPosition(piece).y) * 2;
+                //value += piece.value * 3;
+                //value += piece.value;
+                value = value + (piece.value * 10) + piece.getMobilityValue(getPosition(piece).x, getPosition(piece).y);
             }
             else if(piece != null && piece.colour != colour)
             {
-                value -= piece.possibleMoves.Count;
-                value -= piece.getMobilityValue(getPosition(piece).x, getPosition(piece).y)*2;
-                //value -= piece.value * 10;
-                value -= piece.value*3;
+                //value -= piece.possibleMoves.Count;
+                //value -= piece.getMobilityValue(getPosition(piece).x, getPosition(piece).y)*2;
+                //value -= piece.value*3;
+                //value -= piece.value;
+                value = value - (piece.value * 10) - piece.getMobilityValue(getPosition(piece).x, getPosition(piece).y);
             }
         }
         return value;

@@ -283,20 +283,34 @@ public class King : Piece {
         return false;
     }
 
-    public override int getMobilityValue(int file, int rank)
+    public override float getMobilityValue(int file, int rank)
     {
-        if(file == 0 || file == 7 || rank == 0 || rank == 7)
+        List<double[]> list = new List<double[]>();
+        list.Add(new double[] { -3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0 });
+        list.Add(new double[] { -3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0 });
+        list.Add(new double[] { -3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0 });
+        list.Add(new double[] { -3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0 });
+        list.Add(new double[] { -2.0, -3.0, -3.0, -4.0, -4.0, -3.0, -3.0, -2.0 });
+        list.Add(new double[] { -1.0, -2.0, -2.0, -2.0, -2.0, -2.0, -2.0, -1.0 });
+        list.Add(new double[] { 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0 });
+        list.Add(new double[] { 2.0, 3.0, 1.0, 0.0, 0.0, 1.0, 3.0, 2.0 });
+        if (colour == Colour.Black)
         {
-            if((file == 0 && rank == 0) || (file == 0 && rank == 7) || (file == 7 && rank == 0) || (file == 7 && rank == 7))
-            {
-                return 3;
-            }
-            else
-            {
-                return 5;
-            }
+            list.Reverse();
         }
-        return 8;
+        return (float)list[file][rank];
+        //if(file == 0 || file == 7 || rank == 0 || rank == 7)
+        //{
+        //    if((file == 0 && rank == 0) || (file == 0 && rank == 7) || (file == 7 && rank == 0) || (file == 7 && rank == 7))
+        //    {
+        //        return 3;
+        //    }
+        //    else
+        //    {
+        //        return 5;
+        //    }
+        //}
+        //return 8;
     }
 
 }

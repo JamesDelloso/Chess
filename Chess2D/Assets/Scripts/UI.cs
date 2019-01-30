@@ -158,7 +158,8 @@ public class UI : MonoBehaviour {
                         Game.board.history.Add(Game.board.getFen());
                         print(Game.board.moves.Count);
                         undoIndex++;
-                        Invoke("playAI", 1);
+                        //Invoke("playAI", 1);
+                        playAI();
                         //int a;
                         //int b;
                         //int c;
@@ -183,7 +184,7 @@ public class UI : MonoBehaviour {
                     {
                         audioSource = 2;
                     }
-                    GetComponents<AudioSource>()[audioSource].Play();
+                    //GetComponents<AudioSource>()[audioSource].Play();
                 }
             }
             else if (selectedPiece != null && !selectedPiece.generatePossibleMoves(Game.board).Contains(new Vector2Int(file, rank)))
@@ -231,13 +232,14 @@ public class UI : MonoBehaviour {
         int b;
         int c;
         int d;
-        Game.ai.getMove(Game.board, out a, out b, out c, out d);
+        StartCoroutine(Game.ai.getMove(Game.board));
+        //Game.ai.getMove(Game.board, out a, out b, out c, out d);
         //print(a + "," + b + " : " + c + "," + d);
-        Game.currentPlayer.move(a, b, c, d);
-        Game.board.movePiece(a, b, c, d);
-        Game.currentPlayer.seeIfCheckOrStaleMate();
-        Game.board.history.Add(Game.board.getFen());
-        updateMoves();
+        //Game.currentPlayer.move(a, b, c, d);
+        //Game.board.movePiece(a, b, c, d);
+        //Game.currentPlayer.seeIfCheckOrStaleMate();
+        //Game.board.history.Add(Game.board.getFen());
+        //updateMoves();
     }
 
     public void onDragPiece()
