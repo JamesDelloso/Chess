@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 public class Board {
 
@@ -22,6 +23,7 @@ public class Board {
 
     public Board(string fen)
     {
+        Profiler.BeginSample("Making New Board");
         squares = FEN.readBoard(fen);
         if (fen.Split(' ')[1] == "w") whitesTurn = true;
         else whitesTurn = false;
@@ -62,6 +64,7 @@ public class Board {
             }
         }
         history.Add(fen);
+        Profiler.EndSample();
     }
 
     public void movePiece(int fromX, int fromY, int toX, int toY)
@@ -71,10 +74,10 @@ public class Board {
         Piece piece = getPiece(fromX, fromY);
         //Debug.Log("Moving " + piece + " from (" + fromX + "," + fromY + ") to (" + toX + "," + toY + ")");
         //piece.prevPos = new Vector2Int(fromX, fromY);
-        //Debug.Log(piece);
+        //Debug.Log(fromX+","+fromY+" "+toX+","+toY);
         if (piece.GetType().Equals(typeof(Pawn)) && enPassant.Equals(new Vector2Int(toX, toY)))
         {
-            if(piece.colour == Colour.White)
+            if (piece.colour == Colour.White)
             {
                 squares[toX, 4] = null;
             }
@@ -99,12 +102,12 @@ public class Board {
         }
         else if(piece.ToString() == "White King")
         {
-            if(fromX == 4 && fromY == 0 && toX == 6 && toY == 0)
+            if (fromX == 4 && fromY == 0 && toX == 6 && toY == 0)
             {
                 squares[5, 0] = getPiece(7, 0);
                 squares[7, 0] = null;
             }
-            else if(fromX == 4 && fromY == 0 && toX == 2 && toY == 0)
+            else if (fromX == 4 && fromY == 0 && toX == 2 && toY == 0)
             {
                 squares[3, 0] = getPiece(0, 0);
                 squares[0, 0] = null;

@@ -3,99 +3,75 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-public class AI {
+public static class AI
+{
+    private static Colour aiColour = Colour.Black;
+    private static Colour playerColour = Colour.White;
 
-    public Colour colour;
-    public List<Piece> pieces = new List<Piece>();
+    private static bool nextMoveFound = false;
+    private static List<string> boardPos = new List<string>();
+    private static List<string> boardPosNextMove = new List<string>();
 
-    public AI(Colour colour)
+    public static IEnumerator makeMove(Board currentBoard, MovePieceUI ui)
     {
-        this.colour = colour;
-        foreach (Piece p in Game.board.squares)
-        {
-            if (p != null && p.colour == colour)
-            {
-                pieces.Add(p);
-            }
-        }
-    }
-
-    public IEnumerator getMove(Board board)
-    {
+        float time = Time.time;
         yield return null;
-        Profiler.BeginSample("AI move search");
-        //Debug.Log("==================================================================================================");
-        //Debug.Log(board.getFen());
-        Board bo = new Board(board.getFen());
-        List<Vector4> moves = new List<Vector4>();
-        //a = 1;
-        //b = 7;
-        //c = 2;
-        //d = 5;
-        float maxValue = -10000000;
-        for(int i=0;i<8;i++)
+        //Profiler.BeginSample("AI move search");
+        if (currentBoard.whitesTurn == true)
         {
-            for(int j=0;j<8;j++)
+            aiColour = Colour.White;
+            playerColour = Colour.Black;
+        }
+        Board board = new Board(currentBoard.getFen());
+        int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+        Vector4 move = new Vector4();
+        float maxValue = -10000000;
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
             {
-                if(bo.squares[i,j] != null && bo.squares[i, j].colour == Colour.Black)
+                if (board.squares[i, j] != null && board.squares[i, j].colour == aiColour)
                 {
-                    foreach(Vector2Int pos in bo.squares[i, j].possibleMoves)
+                    foreach (Vector2Int pos in board.squares[i, j].possibleMoves)
                     {
-                        //Debug.Log(board.getFen());
-                        string fen = bo.getFen();
-                        Piece piece1 = bo.getPiece(i, j);
-                        Piece piece2 = bo.getPiece(pos.x, pos.y);
-                        bo.movePiece(i, j, pos.x, pos.y);
-                        //int value = board.getValue(Colour.Black);
-                        float value = min(bo, 2, -10000, 10000);
-                        //Debug.Log(value);
+                        string fen = board.getFen();
+                        Piece piece1 = board.getPiece(i, j);
+                        Piece piece2 = board.getPiece(pos.x, pos.y);
+                        board.movePiece(i, j, pos.x, pos.y);
+                        //float value = board.getValue(Colour.Black);
+                        float value = min(board, 2, -10000, 10000);
                         if (value >= maxValue)
                         {
-                            if(value > maxValue)
-                            {
-                                moves = new List<Vector4>();
-                            }
                             maxValue = value;
-                            moves.Add(new Vector4(i, j, pos.x, pos.y));
-                            //a = i;
-                            //b = j;
-                            //c = pos.x;
-                            //d = pos.y;
+                            x1 = i;
+                            y1 = j;
+                            x2 = pos.x;
+                            y2 = pos.y;
                         }
-                        //board.undo(fen, piece1, piece2, new Vector2Int(i, j), new Vector2Int(pos.x, pos.y));
-                        bo = new Board(fen);
+                        board = new Board(fen);
                         yield return null;
-                        //Debug.Log(board.getFen());
                     }
                 }
             }
         }
-        Vector4 move = moves[Random.Range(0, moves.Count - 1)];
-        //Debug.Log(move);
-        int a = (int)move.x;
-        int b = (int)move.y;
-        int c = (int)move.z;
-        int d = (int)move.w;
-        Debug.Log(move.x + "," + move.y + "," + move.z + "," + move.w);
-        Game.currentPlayer.move(a, b, c, d);
-        Game.board.movePiece(a, b, c, d);
-        Game.currentPlayer.seeIfCheckOrStaleMate();
-        Game.board.history.Add(Game.board.getFen());
-        Profiler.EndSample();
+        Debug.Log(x1 + "," + y1 + "-" + x2 + "," + y2);
+        Debug.Log(Time.time - time);
+        ui.move(x1, y1, x2, y2);
+        //Profiler.EndSample();
     }
 
-    private float min(Board board, int depth, float alpha, float beta)
+    private static float min(Board board, int depth, float alpha, float beta)
     {
         if (depth <= 0)
         {
-            return board.getValue(Colour.Black);
+            return board.getValue(aiColour);
         }
         float minValue = 10000000;
         for (int i = 0; i < 8; i++)
         {
             for (int j = 0; j < 8; j++)
             {
-                if (board.squares[i, j] != null && board.squares[i, j].colour == Colour.White)
+                if (board.squares[i, j] != null && board.squares[i, j].colour == playerColour)
                 {
                     board.squares[i, j].generatePossibleMoves(board);
                     foreach (Vector2Int pos in board.squares[i, j].possibleMoves)
@@ -106,19 +82,11 @@ public class AI {
                         board.movePiece(i, j, pos.x, pos.y);
                         minValue = Mathf.Min(minValue, max(board, depth - 1, alpha, beta));
                         beta = Mathf.Min(beta, minValue);
-                        if(beta <= alpha)
+                        if (beta <= alpha)
                         {
                             return minValue;
                         }
-                        //int value = max(board, depth - 1);
-                        //Debug.Log(board.getFen() + " = " + value);
-                        //if (value < minValue)
-                        //{
-                        //    minValue = value;
-                        //}
-                        //board.undo(fen, piece1, piece2, new Vector2Int(i, j), new Vector2Int(pos.x, pos.y));
                         board = new Board(fen);
-                        //Debug.Log(board.getFen());
                     }
                 }
             }
@@ -126,45 +94,70 @@ public class AI {
         return minValue;
     }
 
-    private float max(Board board, int depth, float alpha, float beta)
+    private static float max(Board board, int depth, float alpha, float beta)
     {
         if (depth <= 0)
         {
-            return board.getValue(Colour.Black);
+            return board.getValue(aiColour);
         }
         float maxValue = -10000000;
         for (int i = 0; i < 8; i++)
         {
             for (int j = 0; j < 8; j++)
             {
-                if (board.squares[i, j] != null && board.squares[i, j].colour == Colour.Black)
+                if (board.squares[i, j] != null && board.squares[i, j].colour == aiColour)
                 {
                     foreach (Vector2Int pos in board.squares[i, j].possibleMoves)
                     {
                         string fen = board.getFen();
                         Piece piece1 = board.getPiece(i, j);
                         Piece piece2 = board.getPiece(pos.x, pos.y);
-                        //Debug.Log(board.getFen());
                         board.movePiece(i, j, pos.x, pos.y);
                         maxValue = Mathf.Max(maxValue, min(board, depth - 1, alpha, beta));
                         alpha = Mathf.Max(alpha, maxValue);
-                        if(beta <= alpha)
+                        if (beta <= alpha)
                         {
                             return maxValue;
                         }
-                        //int value = min(board, depth - 1);
-                        ////Debug.Log(board.getFen() + " = " + value);
-                        //if (value > maxValue)
-                        //{
-                        //    maxValue = value;
-                        //}
-                        //board.undo(fen, piece1, piece2, new Vector2Int(i, j), new Vector2Int(pos.x, pos.y));
                         board = new Board(fen);
-                        //Debug.Log(board.getFen());
                     }
                 }
             }
         }
         return maxValue;
+    }
+
+    public static IEnumerator prepareNextMove()
+    {
+        yield return null;
+        Board board = Game.board;
+        float maxValue = -10000000;
+        string nextMoveFen = "";
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                if (board.squares[i, j] != null && board.squares[i, j].colour == playerColour)
+                {
+                    foreach (Vector2Int pos in board.squares[i, j].possibleMoves)
+                    {
+                        string fen = board.getFen();
+                        boardPos.Add(fen);
+                        board.movePiece(i, j, pos.x, pos.y);
+                        float value = min(board, 2, -10000, 10000);
+                        if (value > maxValue)
+                        {
+                            maxValue = value;
+                            nextMoveFen = board.getFen();
+                        }
+                        board = new Board(fen);
+                    }
+                    yield return null;
+                    boardPosNextMove.Add(nextMoveFen);
+                    maxValue = -10000000;
+                }
+            }
+        }
+        yield return null;
     }
 }

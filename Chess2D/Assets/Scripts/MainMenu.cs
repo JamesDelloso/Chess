@@ -5,10 +5,10 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Networking;
 
-public class MainMenu : NetworkBehaviour {
+public class MainMenu : MonoBehaviour {
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start () {
 		
 	}
 	
@@ -17,19 +17,13 @@ public class MainMenu : NetworkBehaviour {
 		
 	}
 
-    public void singlePlayer()
+    public void loadSinglePlayer()
     {
-        GameObject.Find("Panel").GetComponent<AudioSource>().Play();
-        Game.mode = Game.Mode.SinglePlayer;
-        SceneManager.LoadSceneAsync("SinglePlayer");
+        SceneManager.LoadScene("NewSP");
     }
 
-    public void multiplayer()
+    public void loadMultiplayer()
     {
-        GameObject.Find("Panel").GetComponent<AudioSource>().Play();
-        Game.mode = Game.Mode.Multiplayer;
-        SceneManager.LoadSceneAsync("Multiplayer");
-        //SceneManager.LoadSceneAsync("MultiplayerLobby");
-        //SceneManager.LoadSceneAsync("Multiplayer",LoadSceneMode.Additive);
+        SceneManager.LoadScene("MultiplayerLobby");
     }
 }
