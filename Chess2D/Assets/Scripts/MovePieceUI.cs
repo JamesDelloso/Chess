@@ -77,7 +77,7 @@ public class MovePieceUI : MonoBehaviourPun
             lastMoveHighlight2.transform.localScale = Vector3.one;
             for (int i = 0; i < legalMoves.Count; i++)
             {
-                Destroy(legalMoves[i]);
+                DestroyImmediate(legalMoves[i]);
             }
             if (selectedPiece != null)
             {
@@ -159,6 +159,7 @@ public class MovePieceUI : MonoBehaviourPun
             else
             {
                 selectedPiece = null;
+                pieceHighlight.transform.localScale = Vector3.zero;
             }
         }
     }
