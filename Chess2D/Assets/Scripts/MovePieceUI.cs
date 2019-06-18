@@ -7,14 +7,17 @@ using System;
 using System.IO;
 using Photon.Pun;
 using ExitGames.Client.Photon;
+using Unity.Jobs;
 
 public class MovePieceUI : MonoBehaviourPun
 {
-    private Piece selectedPiece;
-    private GameObject selectedGO;
+    private GameObject selectedPiece;
     private bool promotingPawn = false;
+    private string promotePawnFrom = "";
+    private string promotePawnTo = "";
+    private bool isWhite = true;
 
-    private GameObject[] prevSquares = new GameObject[0];
+    private List<GameObject> legalMoves = new List<GameObject>();
     private Material[] prevMaterials = new Material[0];
     private Material prevMaterial;
 
@@ -25,14 +28,27 @@ public class MovePieceUI : MonoBehaviourPun
     private GameObject pawnPromotion;
     [SerializeField]
     private GameObject gameEnd;
+    [SerializeField]
+    private GameObject legalMoveDotPrefab;
+    [SerializeField]
+    private GameObject legalMoveBorderPrefab;
+    [SerializeField]
+    private Color32 lightColour;
+    [SerializeField]
+    private Color32 darkColour;
+    [SerializeField]
+    private GameObject pieceHighlight;
+    [SerializeField]
+    private GameObject lastMoveHighlight1;
+    [SerializeField]
+    private GameObject lastMoveHighlight2;
 
     // Use this for initialization
     void Start()
     {
-        name = "White Board";
         if (PhotonNetwork.IsConnected && PhotonNetwork.CurrentRoom.PlayerCount == 2)
         {
-            name = "Black Board";
+            isWhite = false;
             transform.eulerAngles = new Vector3(0, 0, 180);
         }
         else if(PhotonNetwork.IsConnected == false)
@@ -46,31 +62,34 @@ public class MovePieceUI : MonoBehaviourPun
     // Update is called once per frame
     void Update()
     {
-
+        if (Input.GetMouseButtonUp(0) && selectedPiece != null)
+        {
+            selectedPiece.transform.localPosition = Vector3.zero;
+            selectedPiece.GetComponent<SpriteRenderer>().sortingOrder = 1;
+        }
     }
 
     public void squareSelected(GameObject squareGo)
     {
-        if(pawnPromotion.transform.GetChild(0).gameObject.activeSelf == false && pawnPromotion.transform.GetChild(1).gameObject.activeSelf == false)
+        if (pawnPromotion.transform.GetChild(0).gameObject.activeSelf == false && pawnPromotion.transform.GetChild(1).gameObject.activeSelf == false)
         {
-            int file = int.Parse(squareGo.name.Substring(0, 1));
-            int rank = int.Parse(squareGo.name.Substring(2, 1));
-            Image image = squareGo.GetComponent<Image>();
-            for (int i = 0; i < prevSquares.Length; i++)
+            lastMoveHighlight1.transform.localScale = Vector3.one;
+            lastMoveHighlight2.transform.localScale = Vector3.one;
+            for (int i = 0; i < legalMoves.Count; i++)
             {
-                Destroy(prevSquares[i]);
+                Destroy(legalMoves[i]);
             }
-            if (prevMaterial != null && selectedGO != null)
+            if (selectedPiece != null)
             {
-                selectedGO.transform.parent.GetComponent<Image>().material = prevMaterial;
+                selectedPiece.transform.localPosition = Vector3.zero;
             }
-            if (selectedPiece != null && selectedPiece.generatePossibleMoves(Game.board).Contains(new Vector2Int(file, rank)))
+            if (selectedPiece != null && squareGo.transform.childCount != 0 && squareGo.transform.GetChild(0).name == "legalMove")
             {
-                int x = Game.board.getPosition(selectedPiece).x;
-                int y = Game.board.getPosition(selectedPiece).y;
-                if (selectedPiece.GetType().Equals(typeof(Pawn)) && rank == 7 || selectedPiece.GetType().Equals(typeof(Pawn)) && rank == 0)
+                if ((selectedPiece.name == "WhitePawn" && squareGo.name[1] == '8') || (selectedPiece.name == "BlackPawn" && squareGo.name[1] == '1'))
                 {
-                    if (rank == 7)
+                    promotePawnFrom = selectedPiece.transform.parent.name;
+                    promotePawnTo = squareGo.name;
+                    if (squareGo.name[1] == '8')
                     {
                         pawnPromotion.transform.GetChild(0).gameObject.SetActive(true);
                     }
@@ -78,69 +97,68 @@ public class MovePieceUI : MonoBehaviourPun
                     {
                         pawnPromotion.transform.GetChild(1).gameObject.SetActive(true);
                     }
-                    GameObject square = GameObject.Find(file.ToString() + "," + rank.ToString());
-                    if (square.transform.childCount == 1)
+                    selectedPiece.transform.SetParent(squareGo.transform);
+                    if (squareGo.transform.childCount > 1)
                     {
-                        Destroy(square.transform.GetChild(0).gameObject);
+                        Destroy(squareGo.transform.GetChild(0).gameObject);
+                        if (squareGo.transform.childCount > 1)
+                        {
+                            Destroy(squareGo.transform.GetChild(1).gameObject);
+                        }
                     }
-                    selectedGO.transform.SetParent(square.transform);
-                    selectedGO.transform.position = square.transform.position;
                 }
                 else
                 {
-                    //StopCoroutine(AI.prepareNextMove());
-                    photonView.RPC("move", RpcTarget.All, x, y, file, rank);
-                    Game.board.history.Add(Game.board.getFen());
-
-                    //using (StreamWriter sw = new StreamWriter("Assets/GameStatus.txt", false))
-                    //{
-                    //    sw.WriteLine(FEN.generate(Game.board));
-                    //}
-
+                    photonView.RPC("move", RpcTarget.All, selectedPiece.transform.parent.name, squareGo.name);
+                    selectedPiece.GetComponent<SpriteRenderer>().sortingOrder = 1;
                     selectedPiece = null;
-                    selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
-                    selectedGO = null;
-                    if (PhotonNetwork.OfflineMode == true && gameEnd.activeSelf == false)
+                    if (PhotonNetwork.OfflineMode == true)
                     {
-                        StartCoroutine(AI.makeMove(Game.board, this));
-                        //StartCoroutine(AI.prepareNextMove());
+                        StartCoroutine(AI.getMove(Game.board, this));
                     }
                 }
+                pieceHighlight.transform.localScale = Vector3.zero;
             }
-            else if (selectedPiece != null && !selectedPiece.generatePossibleMoves(Game.board).Contains(new Vector2Int(file, rank)))
+            else if (squareGo.transform.childCount != 0 && squareGo.transform.GetChild(0).name != "legalMove" && ((Game.board.isWhitesTurn() && char.IsUpper(Game.board.getPiece(squareGo.name)) && isWhite) || (!Game.board.isWhitesTurn() && char.IsLower(Game.board.getPiece(squareGo.name)) && !isWhite)))
+            //else if (squareGo.transform.childCount != 0 && squareGo.transform.GetChild(0).name != "legalMove")
             {
-                selectedGO.transform.localPosition = Vector3.zero;
-                selectedPiece = null;
-                selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
-                selectedGO = null;
-            }
-            if (Game.board.getPiece(file, rank) != null && ((Game.board.getPiece(file, rank).colour == Colour.White && Game.board.whitesTurn && name == "White Board") || (Game.board.getPiece(file, rank).colour == Colour.Black && !Game.board.whitesTurn && name == "Black Board")))
-            {
-                List<Vector2Int> possibleMoves = Game.board.getPiece(file, rank).generatePossibleMoves(Game.board);
-                prevMaterials = new Material[possibleMoves.Count + 1];
-                prevSquares = new GameObject[possibleMoves.Count + 1];
-                for (int i = 0; i < possibleMoves.Count; i++)
+                legalMoves = new List<GameObject>();
+                foreach (string move in PossibleMoves.search(Game.board, squareGo.name))
                 {
-                    Vector2Int sq = possibleMoves[i];
-                    GameObject dot = new GameObject();
-                    dot.name = "dot";
-                    dot.transform.SetParent(GameObject.Find("Canvas").transform);
-                    dot.transform.position = GameObject.Find(sq.x.ToString() + "," + sq.y.ToString()).transform.position;
-                    dot.AddComponent<Image>();
-                    Sprite sprite = Resources.Load<Sprite>("Materials/Dot");
-                    dot.GetComponent<Image>().sprite = sprite;
-                    dot.GetComponent<Image>().color = new Color32(0, 0, 0, 75);
-                    dot.GetComponent<Image>().raycastTarget = false;
-                    dot.GetComponent<RectTransform>().sizeDelta = new Vector2(70, 70);
-                    dot.GetComponent<RectTransform>().localScale = Vector3.one;
-                    dot.gameObject.tag = "dot";
-                    prevSquares[i] = dot;
+                    GameObject prefab = legalMoveDotPrefab;
+                    GameObject square = GameObject.Find(move.Substring(0,2));
+                    GameObject legalMove;
+                    Transform parentTransform = square.transform;
+                    if (parentTransform.childCount >= 1 && parentTransform.GetChild(0).name == "legalMove")
+                    {
+                        continue;
+                    }
+                    if ((parentTransform.childCount == 1 && parentTransform.GetChild(0).name != "legalMove") || parentTransform.childCount == 2)
+                    {
+                        prefab = legalMoveBorderPrefab;
+                    }
+                    legalMove = GameObject.Instantiate<GameObject>(prefab, parentTransform);
+                    legalMove.name = "legalMove";
+                    legalMove.transform.localPosition = Vector3.zero;
+                    legalMove.transform.SetAsFirstSibling();
+                    legalMoves.Add(legalMove);
+                    if (lastMoveHighlight1.transform.position == square.transform.position)
+                    {
+                        lastMoveHighlight1.transform.localScale = Vector3.zero;
+                    }
+                    else if (lastMoveHighlight2.transform.position == square.transform.position)
+                    {
+                        lastMoveHighlight2.transform.localScale = Vector3.zero;
+                    }
                 }
-                prevMaterial = image.material;
-                image.material = (Material)Resources.Load("Materials/SelectedSquare");
-                selectedPiece = Game.board.getPiece(file, rank);
-                selectedGO = GameObject.Find(file + "," + rank).transform.GetChild(0).gameObject;
-                selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 2;
+                selectedPiece = squareGo.transform.GetChild(0).gameObject;
+                selectedPiece.GetComponent<SpriteRenderer>().sortingOrder = 2;
+                pieceHighlight.transform.position = squareGo.transform.position;
+                pieceHighlight.transform.localScale = Vector3.one;
+            }
+            else
+            {
+                selectedPiece = null;
             }
         }
     }
@@ -152,131 +170,70 @@ public class MovePieceUI : MonoBehaviourPun
             Vector3 v = Input.mousePosition;
             v.z = 100;
             v = Camera.main.ScreenToWorldPoint(v);
-            if (Input.GetMouseButtonUp(0))
-            {
-                squareSelected(selectedGO);
-            }
-            else
-            {
-                v.x = Mathf.Clamp(v.x, -50, 50);
-                v.y = Mathf.Clamp(v.y, -50, 50);
-                selectedGO.transform.position = v;
-            }
+            v.x = Mathf.Clamp(v.x, -50, 50);
+            v.y = Mathf.Clamp(v.y, -50, 50);
+            selectedPiece.transform.position = v;
         }
     }
 
     [PunRPC]
-    public void move(int a, int b, int c, int d)
+    public void move(string from, string to)
     {
-        Piece rookToCastle = Game.board.isCastling(a, b, c, d);
-        if (rookToCastle != null)
-        {
-            string pos = Game.board.getPosition(rookToCastle).x.ToString() + "," + Game.board.getPosition(rookToCastle).y.ToString();
-            GameObject rook = GameObject.Find(pos).transform.GetChild(0).gameObject;
-            pos = ((a + c) / 2).ToString() + "," + Game.board.getPosition(rookToCastle).y.ToString();
-            GameObject square = GameObject.Find(pos).gameObject;
-            rook.transform.SetParent(square.transform);
-            rook.transform.position = square.transform.position;
-        }
-        else if (Game.board.enPassant == new Vector2Int(c, d))
-        {
-            if (Game.board.squares[a, b].colour == Colour.White)
-            {
-                pieceTaken(GameObject.Find(c.ToString() + "," + (d - 1).ToString()).transform.GetChild(0).gameObject);
-            }
-            else
-            {
-                pieceTaken(GameObject.Find(c.ToString() + "," + (d + 1).ToString()).transform.GetChild(0).gameObject);
-            }
-        }
-        try
-        {
-            pieceTaken(GameObject.Find(c.ToString() + "," + d.ToString()).transform.GetChild(0).gameObject);
-        }
-        catch { }
-        GameObject piece = GameObject.Find(a.ToString() + "," + b.ToString()).transform.GetChild(0).gameObject;
-        GameObject parent = GameObject.Find(c.ToString() + "," + d.ToString()).gameObject;
-        piece.transform.SetParent(parent.transform);
-        piece.transform.position = parent.transform.position;
-        if (prevSquare1 != null)
-        {
-            int file = int.Parse(prevSquare1.name.Substring(0, 1));
-            int rank = int.Parse(prevSquare1.name.Substring(2, 1));
-            prevSquare1.GetComponent<Image>().material = (Material)Resources.Load("Materials/LightSquare");
-            if ((file + rank) % 2 == 0)
-            {
-                prevSquare1.GetComponent<Image>().material = (Material)Resources.Load("Materials/DarkSquare");
-            }
-            file = int.Parse(prevSquare2.name.Substring(0, 1));
-            rank = int.Parse(prevSquare2.name.Substring(2, 1));
-            prevSquare2.GetComponent<Image>().material = (Material)Resources.Load("Materials/LightSquare");
-            if ((file + rank) % 2 == 0)
-            {
-                prevSquare2.GetComponent<Image>().material = (Material)Resources.Load("Materials/DarkSquare");
-            }
-        }
-        prevSquare1 = GameObject.Find(a.ToString() + "," + b.ToString());
-        prevSquare2 = GameObject.Find(c.ToString() + "," + d.ToString());
-        prevSquare1.GetComponent<Image>().material = (Material)Resources.Load("Materials/PrevSquare");
-        prevSquare2.GetComponent<Image>().material = (Material)Resources.Load("Materials/PrevSquare");
-
-        Game.board.movePiece(a, b, c, d);
+        Game.board.movePiece(from, to);
+        lastMoveHighlight1.transform.position = GameObject.Find(from).transform.position;
+        lastMoveHighlight2.transform.position = GameObject.Find(to.Substring(0,2)).transform.position;
+        loadPieces();
         seeIfCheckOrStaleMate();
     }
 
     private void pieceTaken(GameObject piece)
     {
-        if (piece.name.Contains("Black"))
-        {
-            if (!Game.whitePiecesTaken.Contains(piece.name))
-            {
-                Game.whitePiecesTaken.Add(piece.name);
-                piece.transform.SetParent(GameObject.Find("White Taken Pieces").transform.GetChild(Game.whitePiecesTaken.Count - 1));
-                piece.transform.position = GameObject.Find("White Taken Pieces").transform.GetChild(Game.whitePiecesTaken.Count - 1).transform.position;
-            }
-            else
-            {
-                piece.transform.SetParent(GameObject.Find("White Taken Pieces").transform.GetChild(Game.whitePiecesTaken.IndexOf(piece.name)));
-                piece.transform.position = GameObject.Find("White Taken Pieces").transform.GetChild(Game.whitePiecesTaken.IndexOf(piece.name)).transform.position;
-                piece.transform.parent.GetComponent<TextMesh>().text = GameObject.Find("White Taken Pieces").transform.GetChild(Game.whitePiecesTaken.IndexOf(piece.name)).childCount.ToString();
-            }
-        }
-        else
-        {
-            if (!Game.blackPiecesTaken.Contains(piece.name))
-            {
-                Game.blackPiecesTaken.Add(piece.name);
-                piece.transform.SetParent(GameObject.Find("Black Taken Pieces").transform.GetChild(Game.blackPiecesTaken.Count - 1));
-                piece.transform.position = GameObject.Find("Black Taken Pieces").transform.GetChild(Game.blackPiecesTaken.Count - 1).transform.position;
-            }
-            else
-            {
-                piece.transform.SetParent(GameObject.Find("Black Taken Pieces").transform.GetChild(Game.blackPiecesTaken.IndexOf(piece.name)));
-                piece.transform.position = GameObject.Find("Black Taken Pieces").transform.GetChild(Game.blackPiecesTaken.IndexOf(piece.name)).transform.position;
-                piece.transform.parent.GetComponent<TextMesh>().text = GameObject.Find("Black Taken Pieces").transform.GetChild(Game.blackPiecesTaken.IndexOf(piece.name)).childCount.ToString();
-            }
-        }
-        piece.transform.localScale = new Vector3(100, 100, 100);
+        //if (piece.name.Contains("Black"))
+        //{
+        //    if (!Game.whitePiecesTaken.Contains(piece.name))
+        //    {
+        //        Game.whitePiecesTaken.Add(piece.name);
+        //        piece.transform.SetParent(GameObject.Find("White Taken Pieces").transform.GetChild(Game.whitePiecesTaken.Count - 1));
+        //        piece.transform.position = GameObject.Find("White Taken Pieces").transform.GetChild(Game.whitePiecesTaken.Count - 1).transform.position;
+        //    }
+        //    else
+        //    {
+        //        piece.transform.SetParent(GameObject.Find("White Taken Pieces").transform.GetChild(Game.whitePiecesTaken.IndexOf(piece.name)));
+        //        piece.transform.position = GameObject.Find("White Taken Pieces").transform.GetChild(Game.whitePiecesTaken.IndexOf(piece.name)).transform.position;
+        //        piece.transform.parent.GetComponent<TextMesh>().text = GameObject.Find("White Taken Pieces").transform.GetChild(Game.whitePiecesTaken.IndexOf(piece.name)).childCount.ToString();
+        //    }
+        //}
+        //else
+        //{
+        //    if (!Game.blackPiecesTaken.Contains(piece.name))
+        //    {
+        //        Game.blackPiecesTaken.Add(piece.name);
+        //        piece.transform.SetParent(GameObject.Find("Black Taken Pieces").transform.GetChild(Game.blackPiecesTaken.Count - 1));
+        //        piece.transform.position = GameObject.Find("Black Taken Pieces").transform.GetChild(Game.blackPiecesTaken.Count - 1).transform.position;
+        //    }
+        //    else
+        //    {
+        //        piece.transform.SetParent(GameObject.Find("Black Taken Pieces").transform.GetChild(Game.blackPiecesTaken.IndexOf(piece.name)));
+        //        piece.transform.position = GameObject.Find("Black Taken Pieces").transform.GetChild(Game.blackPiecesTaken.IndexOf(piece.name)).transform.position;
+        //        piece.transform.parent.GetComponent<TextMesh>().text = GameObject.Find("Black Taken Pieces").transform.GetChild(Game.blackPiecesTaken.IndexOf(piece.name)).childCount.ToString();
+        //    }
+        //}
+        //piece.transform.localScale = new Vector3(100, 100, 100);
     }
 
     private void seeIfCheckOrStaleMate()
     {
-        if (Game.board.isCheckMate(Game.board.wKing) == true)
+        if (Game.board.isCheckMate('K'))
         {
             gameEnd.SetActive(true);
             gameEnd.transform.GetChild(0).GetComponent<Text>().text = "Checkmate!\n\nBlack Wins";
         }
-        else if (Game.board.isCheckMate(Game.board.bKing) == true)
+        else if (Game.board.isCheckMate('k'))
         {
             gameEnd.SetActive(true);
             gameEnd.transform.GetChild(0).GetComponent<Text>().text = "Checkmate!\n\nWhite Wins";
         }
-        else if (Game.board.isStaleMate(Game.board.wKing) == true)
-        {
-            gameEnd.SetActive(true);
-            gameEnd.transform.GetChild(0).GetComponent<Text>().text = "Stalemate!\n\nDraw";
-        }
-        else if (Game.board.isStaleMate(Game.board.bKing) == true)
+        else if (Game.board.isStalemate('K') || Game.board.isStalemate('k'))
         {
             gameEnd.SetActive(true);
             gameEnd.transform.GetChild(0).GetComponent<Text>().text = "Stalemate!\n\nDraw";
@@ -285,99 +242,110 @@ public class MovePieceUI : MonoBehaviourPun
 
     private void loadPieces()
     {
-        for (int i = 0; i < 8; i++)
+        string fen = Game.board.fen;
+        string[] board = fen.Remove(fen.IndexOf(' ')).Split('/');
+        string boardString = "";
+        int index = 0;
+        string prefabName = "";
+        foreach (string s in board)
         {
-            for (int j = 0; j < 8; j++)
+            boardString = s + boardString;
+        }
+        for(int i=0;i<64;i++)
+        {
+            if (transform.GetChild(i).transform.childCount != 0)
             {
-                GameObject.Find(i.ToString() + "," + j.ToString()).GetComponent<Image>().material = (Material)Resources.Load("Materials/LightSquare");
-                if ((i + j) % 2 == 0)
+                Destroy(transform.GetChild(i).GetChild(0).gameObject);
+                if (transform.GetChild(i).childCount == 2)
                 {
-                    GameObject.Find(i.ToString() + "," + j.ToString()).GetComponent<Image>().material = (Material)Resources.Load("Materials/DarkSquare");
-                }
-                if (GameObject.Find(i.ToString() + "," + j.ToString()).transform.childCount > 0)
-                {
-                    Destroy(GameObject.Find(i.ToString() + "," + j.ToString()).transform.GetChild(0).gameObject);
-                }
-                if (Game.board.squares[i, j] != null)
-                {
-                    GameObject go = (GameObject)Instantiate(Resources.Load(Game.board.squares[i, j].ToString().Replace(" ", string.Empty)));
-                    go.name = Game.board.squares[i, j].ToString();
-                    go.transform.SetParent(GameObject.Find(i.ToString() + "," + j.ToString()).transform);
-                    go.transform.localPosition = Vector3.zero;
+                    Destroy(transform.GetChild(i).GetChild(1).gameObject);
                 }
             }
         }
-        foreach (GameObject dot in GameObject.FindGameObjectsWithTag("dot"))
+        int number;
+        foreach (char c in boardString)
         {
-            Destroy(dot);
+            prefabName = "";
+            if (int.TryParse(c.ToString(), out number) == true)
+            {
+                index += number;
+            }
+            else
+            {
+                if (char.IsLower(c))
+                {
+                    prefabName = "Black";
+                }
+                else if (char.IsUpper(c))
+                {
+                    prefabName = "White";
+                }
+                char piece = char.ToLower(c);
+                if (piece == 'r')
+                {
+                    prefabName += "Rook";
+                }
+                else if (piece == 'n')
+                {
+                    prefabName += "Knight";
+                }
+                else if (piece == 'b')
+                {
+                    prefabName += "Bishop";
+                }
+                else if (piece == 'q')
+                {
+                    prefabName += "Queen";
+                }
+                else if (piece == 'k')
+                {
+                    prefabName += "King";
+                }
+                else if (piece == 'p')
+                {
+                    prefabName += "Pawn";
+                }
+                if(prefabName != "")
+                {
+                    GameObject pieceGo = (GameObject)Instantiate(Resources.Load(prefabName));
+                    pieceGo.name = prefabName;
+                    pieceGo.transform.SetParent(transform.GetChild(index).transform);
+                    pieceGo.transform.localPosition = Vector3.zero;
+                    index++;
+                }
+            }
         }
     }
 
     public void selectPromotion(string piece)
     {
-        Vector2Int from = Game.board.getPosition(selectedPiece);
-        Vector2Int to = new Vector2Int(int.Parse(selectedGO.transform.parent.name.Split(',')[0]), int.Parse(selectedGO.transform.parent.name.Split(',')[1]));
-        photonView.RPC("promotePawn", RpcTarget.All, piece, from.x, from.y, to.x, to.y);
-
-        if (PhotonNetwork.OfflineMode == true && gameEnd.activeSelf == false)
-        {
-            StartCoroutine(AI.makeMove(Game.board, this));
-        }
-
-        selectedPiece = null;
-        selectedGO.GetComponent<SpriteRenderer>().sortingOrder = 1;
-        selectedGO = null;
-    }
-
-    [PunRPC]
-    public void promotePawn(string piece, int fromX, int fromY, int toX, int toY)
-    {
         pawnPromotion.transform.GetChild(0).gameObject.SetActive(false);
         pawnPromotion.transform.GetChild(1).gameObject.SetActive(false);
 
-        string pieceType = piece.Split(' ')[1];
-        Colour colour = Colour.White;
-        if (piece.Split(' ')[0] == "Black")
+        photonView.RPC("promotePawn", RpcTarget.All, piece, promotePawnFrom, promotePawnTo);
+        if (PhotonNetwork.OfflineMode == true && gameEnd.activeSelf == false)
         {
-            colour = Colour.Black;
+            StartCoroutine(AI.getMove(Game.board, this));
         }
-        if (pieceType == "Queen")
-        {
-            Game.board.squares[fromX, fromY] = new Queen(colour);
-        }
-        else if (pieceType == "Rook")
-        {
-            Game.board.squares[fromX, fromY] = new Rook(colour);
-        }
-        else if (pieceType == "Bishop")
-        {
-            Game.board.squares[fromX, fromY] = new Bishop(colour);
-        }
-        else if (pieceType == "Knight")
-        {
-            Game.board.squares[fromX, fromY] = new Knight(colour);
-        }
+    }
 
-        Game.board.movePiece(fromX, fromY, toX, toY);
-
-        if(GameObject.Find(toX.ToString() + "," + toY.ToString()).transform.childCount == 1)
+    [PunRPC]
+    public void promotePawn(string newPiece, string from, string to)
+    {
+        lastMoveHighlight1.transform.position = GameObject.Find(from).transform.position;
+        lastMoveHighlight2.transform.position = GameObject.Find(to).transform.position;
+        string pieceColour = newPiece.Split(' ')[0];
+        char piece = newPiece.Split(' ')[1][0];
+        if(newPiece.Split(' ')[1] == "Knight")
         {
-            Destroy(GameObject.Find(toX.ToString() + "," + toY.ToString()).transform.GetChild(0).gameObject);
+            piece = 'N';
         }
-        if(GameObject.Find(fromX.ToString() + "," + fromY.ToString()).transform.childCount == 1)
+        if(pieceColour == "Black")
         {
-            Destroy(GameObject.Find(fromX.ToString() + "," + fromY.ToString()).transform.GetChild(0).gameObject);
+            piece = char.ToLower(piece);
         }
-
-        GameObject go = (GameObject)Instantiate(Resources.Load(piece.Replace(" ", string.Empty)));
-        go.transform.SetParent(GameObject.Find(toX.ToString() + "," + toY.ToString()).transform);
-        go.transform.localPosition = Vector3.zero;
-
-        prevSquare1 = GameObject.Find(fromX.ToString() + "," + fromY.ToString());
-        prevSquare2 = GameObject.Find(toX.ToString() + "," + toY.ToString());
-        prevSquare1.GetComponent<Image>().material = (Material)Resources.Load("Materials/PrevSquare");
-        prevSquare2.GetComponent<Image>().material = (Material)Resources.Load("Materials/PrevSquare");
-
+        Game.board.promotePawn(piece, from, to);
+        loadPieces();
         seeIfCheckOrStaleMate();
     }
 }

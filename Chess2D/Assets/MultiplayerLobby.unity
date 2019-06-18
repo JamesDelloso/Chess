@@ -454,7 +454,7 @@ MonoBehaviour:
   roomList: {fileID: 942892812}
   roomButtonPrefab: {fileID: 1101847961442819754, guid: e71afaa79b429db4d8ff07a83764e17b,
     type: 3}
-  joiningRoom: 0
+  createRoomButton: {fileID: 245363915}
 --- !u!4 &389397298
 Transform:
   m_ObjectHideFlags: 0

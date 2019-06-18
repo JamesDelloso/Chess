@@ -14,14 +14,16 @@ public class MultiplayerLobby : MonoBehaviourPunCallbacks
     private GameObject roomList;
     [SerializeField]
     private GameObject roomButtonPrefab;
+    [SerializeField]
+    private GameObject createRoomButton;
 
-    public bool joiningRoom = false;
-
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start () {
         PhotonNetwork.AutomaticallySyncScene = true;
         PhotonNetwork.GameVersion = "1";
         PhotonNetwork.ConnectUsingSettings();
+
+        createRoomButton.SetActive(false);
     }
 	
 	// Update is called once per frame
@@ -34,6 +36,11 @@ public class MultiplayerLobby : MonoBehaviourPunCallbacks
         PhotonNetwork.JoinLobby();
     }
 
+    public override void OnJoinedLobby()
+    {
+        createRoomButton.SetActive(true);
+    }
+
     public void createRoom()
     {
         PhotonNetwork.CreateRoom(null, new RoomOptions { MaxPlayers = 2 });
@@ -41,7 +48,7 @@ public class MultiplayerLobby : MonoBehaviourPunCallbacks
 
     public override void OnCreatedRoom()
     {
-        PhotonNetwork.LoadLevel("NewMP");
+        PhotonNetwork.LoadLevel("Game");
     }
 
     public void joinRoom(string roomName)
@@ -53,7 +60,7 @@ public class MultiplayerLobby : MonoBehaviourPunCallbacks
     {
         base.OnJoinedRoom();
     }
-
+    
     public override void OnRoomListUpdate(List<RoomInfo> roomListInfo)
     {
         foreach (RoomInfo ri in roomListInfo)

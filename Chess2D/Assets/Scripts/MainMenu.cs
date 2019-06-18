@@ -19,7 +19,7 @@ public class MainMenu : MonoBehaviour {
 
     public void loadSinglePlayer()
     {
-        SceneManager.LoadScene("NewSP");
+        SceneManager.LoadScene("Game");
     }
 
     public void loadMultiplayer()
