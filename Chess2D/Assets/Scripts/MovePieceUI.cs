@@ -75,6 +75,11 @@ public class MovePieceUI : MonoBehaviourPun
         {
             lastMoveHighlight1.transform.localScale = Vector3.one;
             lastMoveHighlight2.transform.localScale = Vector3.one;
+            bool isLegalMove = false;
+            if(squareGo.transform.childCount != 0 && squareGo.transform.GetChild(0).name == "legalMove")
+            {
+                isLegalMove = true;
+            }
             for (int i = 0; i < legalMoves.Count; i++)
             {
                 DestroyImmediate(legalMoves[i]);
@@ -83,7 +88,7 @@ public class MovePieceUI : MonoBehaviourPun
             {
                 selectedPiece.transform.localPosition = Vector3.zero;
             }
-            if (selectedPiece != null && squareGo.transform.childCount != 0 && squareGo.transform.GetChild(0).name == "legalMove")
+            if (selectedPiece != null && isLegalMove)
             {
                 if ((selectedPiece.name == "WhitePawn" && squareGo.name[1] == '8') || (selectedPiece.name == "BlackPawn" && squareGo.name[1] == '1'))
                 {
